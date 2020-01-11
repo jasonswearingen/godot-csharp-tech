@@ -1,7 +1,7 @@
 WORK IN PROGRESS
 =============
 
-my target is to build a csharp framework for high performance game logic.  
+The end goal is a high performance multithreaded game framework + logic "engine" that uses [Godot](https://godotengine.org/) for presentation.
 
 Current status
 -------
