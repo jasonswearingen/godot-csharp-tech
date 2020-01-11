@@ -1,0 +1,14 @@
+FONTLOG for the Redkost Comic font
+
+This file provides detailed information on the Redkost Comic Font Software.
+This information should be distributed along with the Redkost Comic fonts and
+any derivative works.
+
+Basic Font Information
+
+Redkost Comic is a font that supports a basic Latin script.
+
+Copyright (c) 2017, Rafael Souza (http://facebook.com/rafaelcartunista|rafaelsoasouza@gmail.com),
+with Reserved Font Name Redkost Comic.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.

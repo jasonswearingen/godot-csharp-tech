@@ -1,0 +1,17 @@
+[gd_resource type="SpatialMaterial" load_steps=3 format=2]
+
+[sub_resource type="StreamTexture" id=1]
+flags = 23
+load_path = "res://.import/TactilePaving02_col-clean.jpg-e3de3fc2ff13197dce4312093d028b90.s3tc.stex"
+
+[sub_resource type="StreamTexture" id=2]
+flags = 7
+load_path = "res://.import/TactilePaving02_nrm.jpg-1517ec2efa18c5968223cb7ab2bf4b3f.s3tc.stex"
+
+[resource]
+albedo_texture = SubResource( 1 )
+normal_enabled = true
+normal_scale = -16.0
+normal_texture = SubResource( 2 )
+uv1_scale = Vector3( 0.54, 0.545, 0.54 )
+uv1_triplanar = true

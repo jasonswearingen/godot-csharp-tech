@@ -1,0 +1,32 @@
+[gd_scene load_steps=6 format=2]
+
+[sub_resource type="SphereShape" id=1]
+
+[sub_resource type="OpenSimplexNoise" id=2]
+octaves = 6
+period = 33.5
+persistence = 0.369
+
+[sub_resource type="NoiseTexture" id=3]
+seamless = true
+as_normalmap = true
+bump_strength = 32.0
+noise = SubResource( 2 )
+
+[sub_resource type="SpatialMaterial" id=4]
+albedo_color = Color( 0.945098, 0, 1, 1 )
+metallic = 1.0
+metallic_specular = 0.67
+metallic_texture = SubResource( 3 )
+
+[sub_resource type="SphereMesh" id=5]
+material = SubResource( 4 )
+
+[node name="Steve" type="KinematicBody"]
+
+[node name="CollisionShape" type="CollisionShape" parent="."]
+shape = SubResource( 1 )
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+mesh = SubResource( 5 )
+material/0 = null

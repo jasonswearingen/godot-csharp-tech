@@ -1,0 +1,46 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://assets/box-bevel.obj" type="ArrayMesh" id=1]
+[ext_resource path="res://textures/TactilePaving02_nrm.jpg" type="Texture" id=2]
+
+[sub_resource type="SpatialMaterial" id=1]
+resource_name = "palette"
+albedo_color = Color( 0.501961, 1, 0.952941, 1 )
+normal_enabled = true
+normal_scale = -16.0
+normal_texture = ExtResource( 2 )
+uv1_scale = Vector3( 0.625, 0.625, 0.625 )
+uv1_triplanar = true
+
+[sub_resource type="BoxShape" id=3]
+extents = Vector3( 0.5, 0.5, 0.5 )
+
+[sub_resource type="SpatialMaterial" id=6]
+resource_name = "palette"
+albedo_color = Color( 1, 0.501961, 0.992157, 1 )
+normal_enabled = true
+normal_scale = -16.0
+normal_texture = ExtResource( 2 )
+uv1_scale = Vector3( 0.625, 0.625, 0.625 )
+uv1_triplanar = true
+
+[node name="Scene" type="Spatial"]
+
+[node name="block1" type="MeshInstance" parent="."]
+mesh = ExtResource( 1 )
+material/0 = SubResource( 1 )
+
+[node name="StaticBody" type="StaticBody" parent="block1"]
+
+[node name="CollisionShape" type="CollisionShape" parent="block1/StaticBody"]
+shape = SubResource( 3 )
+
+[node name="block2" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.82493, 0, 0 )
+mesh = ExtResource( 1 )
+material/0 = SubResource( 6 )
+
+[node name="StaticBody" type="StaticBody" parent="block2"]
+
+[node name="CollisionShape" type="CollisionShape" parent="block2/StaticBody"]
+shape = SubResource( 3 )
