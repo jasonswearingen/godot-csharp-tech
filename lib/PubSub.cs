@@ -44,11 +44,11 @@ public class PubSub
 {
 
 	/// <summary>
-    /// Represents a channel of communication between Publisher(s) and Subscriber(s).   
-    /// Only one kind of message may be sent per Channel.
-    /// </summary>
-    /// <typeparam name="TMessage"></typeparam>
-	public class Channel<TMessage>
+	/// Represents a channel of communication between Publisher(s) and Subscriber(s).   
+	/// Only one kind of message may be sent per Channel.
+	/// </summary>
+	/// <typeparam name="TMessage">must be struct (to prevent GC allocations).  Pass a tuple if you want to pass an object</typeparam>
+	public class Channel<TMessage> where TMessage : struct
 	{
 		private ReaderWriterLockSlim rwLock = new ReaderWriterLockSlim();
 
@@ -71,9 +71,9 @@ public class PubSub
 
 
 		/// <summary>
-        /// send a message to subscribers
-        /// </summary>
-        /// <param name="message"></param>
+		/// send a message to subscribers
+		/// </summary>
+		/// <param name="message"></param>
 		public void Publish(TMessage message)
 		{
 			var _markSubsToClean = false;
@@ -157,9 +157,9 @@ public class PubSub
 		}
 
 		/// <summary>
-        /// register a thread-safe queue that will recieve messages
-        /// </summary>
-        /// <param name="target"></param>
+		/// register a thread-safe queue that will recieve messages
+		/// </summary>
+		/// <param name="target"></param>
 		public void Subscribe(ConcurrentQueue<TMessage> target)
 		{
 			rwLock.EnterWriteLock();
@@ -188,17 +188,17 @@ public class PubSub
 
 
 	/// <summary>
-    /// obtain a channel for sending and recieving messages.
-    /// </summary>
-    /// <typeparam name="V"></typeparam>
-    /// <param name="key"></param>
-    /// <returns></returns>
-	public Channel<V> GetChannel<V>(object key)
+	/// obtain a channel for sending and recieving messages.
+	/// </summary>
+	/// <typeparam name="TMessage">must be struct (to prevent GC allocations).  Pass a tuple if you want to pass an object</typeparam>
+	/// <param name="key"></param>
+	/// <returns></returns>
+	public Channel<TMessage> GetChannel<TMessage>(object key) where TMessage : struct
 	{
 
-		var channel = _storage.GetOrAdd(key, (_key) => (new Channel<V>(key)));
+		var channel = _storage.GetOrAdd(key, (_key) => (new Channel<TMessage>(key)));
 
-		return (Channel<V>)channel;
+		return (Channel<TMessage>)channel;
 
 	}
 }

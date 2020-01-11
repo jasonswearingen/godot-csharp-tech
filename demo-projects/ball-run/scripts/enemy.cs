@@ -25,6 +25,11 @@ public class enemy : Area
 	{
 
 		GD.PrintErr("enemy._Ready()");
+
+		//For triggering signals (like collision detection) we will always need to marshal into C# from Godot-Native. 
+		//This PubSub is more for "once we get that first signal, all game logic stays in C#".
+		// The standard way of doing it is marshaling to script, and then script marshaling back to native for sending to other scripts,
+		// then marshalling back to the engine to do something. So this at least saves 2 out of 4 marshals per signal.
 		this.Connect("body_entered", this, nameof(_onEnter));
 
 		simManager = this.GetNode<SimManager>("/root/Level/SimManager");
