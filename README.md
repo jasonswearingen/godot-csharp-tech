@@ -26,6 +26,7 @@ ToC
 
 GOALS
 ========
+These are goals.  Not nessicarily what's available.
 
 High Performance
 ------------
