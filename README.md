@@ -67,3 +67,9 @@ Important Notes
 Troubleshooting (and installing for first time)
 ====
 check this repo's wiki
+
+
+Please give feedback!
+==============
+- Raise an issue on GitHub,
+- email me: jasons aat novalaf doot coom
