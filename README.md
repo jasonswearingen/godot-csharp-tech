@@ -51,7 +51,7 @@ REPO STRUCTURE
 - Git branch layout
    - ```master``` branch contains working builds, with at least some care taken to presentation.  
    - ```dev``` branch is my work in progress, beware.
-- ```./lib/``` contains library code.
+- ```./lib/``` contains library code.  [additional docs in it's readme](./lib/readme.md).
    - ```PubSub.cs``` a reasonably high performance Publish-Subscribe (*Observer Pattern*) based decoupled messaging system.
 - ```./demo-projects/``` contains demos prototyping/showcasing the tech being developed.
 
