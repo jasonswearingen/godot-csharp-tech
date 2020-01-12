@@ -53,7 +53,7 @@ public class PubSub
 		private ReaderWriterLockSlim rwLock = new ReaderWriterLockSlim();
 
 		private List<WeakReference<ConcurrentQueue<TMessage>>> _subscribers = new List<WeakReference<ConcurrentQueue<TMessage>>>();
-		public readonly object key;
+		public readonly string key;
 
 		private List<WeakReference<ConcurrentQueue<TMessage>>> GetSubscribers()
 		{
@@ -62,7 +62,7 @@ public class PubSub
 		}
 
 
-		public Channel(object key)
+		public Channel(string key)
 		{
 			this.key = key;
 		}
@@ -159,14 +159,14 @@ public class PubSub
 		/// <summary>
 		/// register a thread-safe queue that will recieve messages
 		/// </summary>
-		/// <param name="target"></param>
-		public void Subscribe(ConcurrentQueue<TMessage> target)
+		/// <param name="messagesTarget"></param>
+		public void Subscribe(ConcurrentQueue<TMessage> messagesTarget)
 		{
 			rwLock.EnterWriteLock();
 			try
 			{
 				var subs = GetSubscribers();
-				subs.Add(new WeakReference<ConcurrentQueue<TMessage>>(target));
+				subs.Add(new WeakReference<ConcurrentQueue<TMessage>>(messagesTarget));
 			}
 			finally
 			{
@@ -184,7 +184,7 @@ public class PubSub
 	/// value = List<WR<Queue<V>> (Subscribers)
 	/// </summary>
 	/// <returns></returns>
-	private readonly ConcurrentDictionary<object, object> _storage = new ConcurrentDictionary<object, object>();
+	private readonly ConcurrentDictionary<string, object> _storage = new ConcurrentDictionary<string, object>();
 
 
 	/// <summary>
@@ -193,7 +193,7 @@ public class PubSub
 	/// <typeparam name="TMessage">must be struct (to prevent GC allocations).  Pass a tuple if you want to pass an object</typeparam>
 	/// <param name="key"></param>
 	/// <returns></returns>
-	public Channel<TMessage> GetChannel<TMessage>(object key) where TMessage : struct
+	public Channel<TMessage> GetChannel<TMessage>(string key) where TMessage : struct
 	{
 
 		var channel = _storage.GetOrAdd(key, (_key) => (new Channel<TMessage>(key)));
@@ -201,5 +201,6 @@ public class PubSub
 		return (Channel<TMessage>)channel;
 
 	}
+
 }
 

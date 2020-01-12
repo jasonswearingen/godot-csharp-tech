@@ -2,119 +2,126 @@ using Godot;
 using System;
 using System.Linq;
 using System.Collections.Concurrent;
-
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 
 
 
-
-
-
-
-namespace Messaging
+/// <summary>
+/// Emulates a WeakReference<> but of type ```STRUCT```.
+/// IMPORTANT:  you must call ```.Free()``` when done, otherwise leaks occur.
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public struct WeakHandle<T>
 {
 
+	public GCHandle handle;
+
+	public WeakHandle(object target)
+	{
+		handle = GCHandle.Alloc(target, GCHandleType.Weak);
+	}
+
+	public T Target
+	{
+		get { return (T)handle.Target; }
+	}
+
+	public void Free()
+	{
+		handle.Free();
+	}
+}
+
+
+
+
+
+
+/// <summary>
+/// Manages a simulation
+/// </summary>
+public class SimManager2
+{
+	public ConcurrentDictionary<string, object> _messageQueue = new ConcurrentDictionary<string, object>();
 
 	/// <summary>
-	/// Emulates a WeakReference<> but of type ```STRUCT```.
-	/// IMPORTANT:  you must call ```.Free()``` when done, otherwise leaks occur.
+	/// obtain a message queue  (shared consumption of messages)
 	/// </summary>
-	/// <typeparam name="T"></typeparam>
-	public struct WeakHandle<T>
+	/// <typeparam name="TMessage"></typeparam>
+	/// <param name="key"></param>
+	/// <returns></returns>
+	public ConcurrentQueue<TMessage> GetMessageQueue<TMessage>(string key) where TMessage : struct
 	{
-
-		public GCHandle handle;
-
-		public WeakHandle(object target)
-		{
-			handle = GCHandle.Alloc(target, GCHandleType.Weak);
-		}
-
-		public T Target
-		{
-			get { return (T)handle.Target; }
-		}
-
-		public void Free()
-		{
-			handle.Free();
-		}
+		var queue = _messageQueue.GetOrAdd(key, (_key) => new ConcurrentQueue<TMessage>());
+		return (ConcurrentQueue<TMessage>)queue;
+		
 	}
 
 
 
-	public static class MQ
-	{
-
-
-
-
-
-		static ConcurrentDictionary<string, object> storage = new ConcurrentDictionary<string, object>();
-
-		/// <summary>
-		/// a one-off helper to enqueue a single message.  
-		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="value"></param>
-		/// <typeparam name="V"></typeparam>
-		public static void Enqueue<V>(string key, V value)
-		{
-			var queue = (ConcurrentQueue<V>)storage.GetOrAdd(key, (_key) => new ConcurrentQueue<V>());
-			queue.Enqueue(value);
-		}
-
-	}
-
-
-	public static class __ExtensionMethods
-	{
-		public static ConcurrentQueue<V> TestGetQueue<V>(this SingletonFactory sf, string key)
-		{
-			return null;
-		}
-	}
-
-
-
-
-
-	/// <summary>
-	/// access via .instance static member.
-	/// </summary>
-	public class SingletonFactory
-	{
-
-		public event Action TestEvent
-		{
-			add
-			{
-
-			}
-			remove
-			{
-
-			}
-		}
-
-
-		//make 
-		protected SingletonFactory() { }
-
-		public static SingletonFactory instance = new SingletonFactory();
-		public ConcurrentDictionary<string, object> _storage = new ConcurrentDictionary<string, object>();
-
-		public ConcurrentQueue<V> GetQueue<V>(string key)
-		{
-			var queue = (ConcurrentQueue<V>)_storage.GetOrAdd(key, (_key) => new ConcurrentQueue<V>());
-			return queue;
-		}
-
-
-	}
 
 }
+
+
+namespace JobSystem
+{
+
+	public class JobManager
+	{
+
+
+
+		public void test()
+		{
+			System.Threading.ThreadPool.
+
+
+		}
+	}
+
+	public class JobDetails
+	{
+		public  List<Job> dependsOn;
+		public  List<Job> holdingUp;
+
+		public  int input;
+
+
+		/// <summary>
+		/// tasks with same grouping are run in the same thread, sequentially.  only run on other threads if no other work is available for them.
+		/// </summary>
+		public  string memoryAffinity;
+
+		/// <summary>
+		/// lower = more important
+		/// </summary>
+		public  int order;
+
+		public  Action  target;
+
+		/// <summary>
+		/// id of this job.
+		/// </summary>
+		public readonly long id;
+
+	}
+
+	public interface IJob
+	{
+		void Execute(JobDetails jobDetails);
+	}
+
+	
+
+	namespace _internal
+	{
+
+	}
+}
+
+
 
 //public static class MessageQueue
 

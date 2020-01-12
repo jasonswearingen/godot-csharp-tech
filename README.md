@@ -40,7 +40,7 @@ High Performance
 Simulation Engine
 ------------
 - Use Godot for presentation
-  - Headless "Sever" component should run without Godot
+  - "Sever" component should work with a headless version of Godot, and optionally without Godot at all (full CLR app).
 - Rules system
 - world state
 - multiplayer
