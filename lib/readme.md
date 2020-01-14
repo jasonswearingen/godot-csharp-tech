@@ -32,10 +32,10 @@ Q&A
 
 Check it out
 -------------
-* You can view the code here: https://github.com/jasonswearingen/godot-csharp-tools/blob/master/lib/PubSub.cs
-* A demo project using it is here: https://github.com/jasonswearingen/godot-csharp-tools/tree/master/demo-projects/ball-run
-  * The "enemy" publishes it's collisions [scripts/enemy.cs](https://github.com/jasonswearingen/godot-csharp-tools/blob/master/demo-projects/ball-run/scripts/enemy.cs)
-  * and a child node of the player subscribes to it [script/SubExample.cs](https://github.com/jasonswearingen/godot-csharp-tools/blob/master/demo-projects/ball-run/scripts/SubExample.cs)
+* You can view the code here: https://github.com/jasonswearingen/godot-csharp-tech/blob/master/lib/PubSub.cs
+* A demo project using it is here: https://github.com/jasonswearingen/godot-csharp-tech/tree/master/demo-projects/ball-run
+  * The "enemy" publishes it's collisions [scripts/enemy.cs](../demo-projects/ball-run/scripts/enemy.cs)
+  * and a child node of the player subscribes to it [script/SubExample.cs](../demo-projects/ball-run/scripts/SubExample.cs)
 
 
 **This is for CSharp developers**:  maybe later we could interop this with GDScript but I want to get a solid C# framework firstly.
