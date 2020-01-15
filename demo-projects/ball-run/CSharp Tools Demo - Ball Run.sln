@@ -1,12 +1,16 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp Tools Demo - Ball Run", "CSharp Tools Demo - Ball Run.csproj", "{12C3AE1D-2DE9-41F3-8E29-5715204D970A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreadStorm", "..\..\lib\src\ThreadStorm\ThreadStorm.csproj", "{4FCCA1E3-FFE0-4E4E-8BE0-2345C2E75C3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-	Debug|Any CPU = Debug|Any CPU
-	Release|Any CPU = Release|Any CPU
-	Tools|Any CPU = Tools|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Tools|Any CPU = Tools|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -15,5 +19,17 @@ Global
 		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Tools|Any CPU.ActiveCfg = Tools|Any CPU
 		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Tools|Any CPU.Build.0 = Tools|Any CPU
+		{4FCCA1E3-FFE0-4E4E-8BE0-2345C2E75C3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FCCA1E3-FFE0-4E4E-8BE0-2345C2E75C3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FCCA1E3-FFE0-4E4E-8BE0-2345C2E75C3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FCCA1E3-FFE0-4E4E-8BE0-2345C2E75C3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FCCA1E3-FFE0-4E4E-8BE0-2345C2E75C3A}.Tools|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FCCA1E3-FFE0-4E4E-8BE0-2345C2E75C3A}.Tools|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {54A2C91B-5B30-4B5D-8EDD-75C2D11CFF50}
 	EndGlobalSection
 EndGlobal
