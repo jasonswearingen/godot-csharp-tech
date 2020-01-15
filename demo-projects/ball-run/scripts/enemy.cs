@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using ThreadStorm.Messaging;
 
 public class enemy : Area
 {
@@ -19,7 +20,7 @@ public class enemy : Area
 
 
 	public SimManager simManager;
-	public PubSub.Channel<PUBDATA_enemy_body_enter> pubChannel;
+	public Channel<PUBDATA_enemy_body_enter> pubChannel;
 
 	public override void _Ready()
 	{

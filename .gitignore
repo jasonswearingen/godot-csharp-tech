@@ -1,1 +1,5 @@
 .vs/
+lib/src/ThreadStorm/obj/
+lib/src/TestConsoleApp/obj/
+lib/src/TestConsoleApp/bin/
+lib/bin/

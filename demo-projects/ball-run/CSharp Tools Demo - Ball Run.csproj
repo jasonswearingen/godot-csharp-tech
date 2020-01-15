@@ -50,7 +50,11 @@
       <Private>False</Private>
       <HintPath>$(ProjectDir)/.mono/assemblies/$(ApiConfiguration)/GodotSharpEditor.dll</HintPath>
     </Reference>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
     <Reference Include="System" />
+    <Reference Include="ThreadStorm">
+      <HintPath>..\..\lib\bin\netstandard2.0\ThreadStorm.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -58,8 +62,6 @@
     <Compile Include="scripts\enemy.cs" />
     <Compile Include="scripts\SimManager.cs" />
     <Compile Include="scripts\Steve.cs" />
-    <Compile Include="..\..\lib\scratch.cs" />
-    <Compile Include="..\..\lib\PubSub.cs" />
     <Compile Include="scripts\SubExample.cs" />
   </ItemGroup>
   <ItemGroup>
