@@ -55,6 +55,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="addons\MonoDiagLabel\MonoDiagLabel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="scripts\ButtonTitlePlay.cs" />
     <Compile Include="scripts\enemy.cs" />
@@ -72,7 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\lib\src\ThreadStorm\ThreadStorm.csproj">
-      <Project>{4fcca1e3-ffe0-4e4e-8be0-2345c2e75c3a}</Project>
+      <Project>{161d06a6-8ea4-4f1f-aad7-cf27be7b6b64}</Project>
       <Name>ThreadStorm</Name>
     </ProjectReference>
   </ItemGroup>

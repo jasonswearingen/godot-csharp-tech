@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestConsoleApp", "lib\src\TestConsoleApp\TestConsoleApp.csproj", "{B7D016EF-AC53-40F0-9110-1068B3248124}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreadStorm", "lib\src\ThreadStorm\ThreadStorm.csproj", "{161D06A6-8EA4-4F1F-AAD7-CF27BE7B6B64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp Tools Demo - Ball Run", "demo-projects\ball-run\CSharp Tools Demo - Ball Run.csproj", "{12C3AE1D-2DE9-41F3-8E29-5715204D970A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "godot-csharp-tech", "lib\src\godot-csharp-tech\godot-csharp-tech.csproj", "{7795580E-92CB-4597-BC8E-51164F712830}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Tools|Any CPU = Tools|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B7D016EF-AC53-40F0-9110-1068B3248124}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7D016EF-AC53-40F0-9110-1068B3248124}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7D016EF-AC53-40F0-9110-1068B3248124}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7D016EF-AC53-40F0-9110-1068B3248124}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7D016EF-AC53-40F0-9110-1068B3248124}.Tools|Any CPU.ActiveCfg = Release|Any CPU
+		{B7D016EF-AC53-40F0-9110-1068B3248124}.Tools|Any CPU.Build.0 = Release|Any CPU
+		{161D06A6-8EA4-4F1F-AAD7-CF27BE7B6B64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{161D06A6-8EA4-4F1F-AAD7-CF27BE7B6B64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{161D06A6-8EA4-4F1F-AAD7-CF27BE7B6B64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{161D06A6-8EA4-4F1F-AAD7-CF27BE7B6B64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{161D06A6-8EA4-4F1F-AAD7-CF27BE7B6B64}.Tools|Any CPU.ActiveCfg = Release|Any CPU
+		{161D06A6-8EA4-4F1F-AAD7-CF27BE7B6B64}.Tools|Any CPU.Build.0 = Release|Any CPU
+		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Tools|Any CPU.ActiveCfg = Tools|Any CPU
+		{12C3AE1D-2DE9-41F3-8E29-5715204D970A}.Tools|Any CPU.Build.0 = Tools|Any CPU
+		{7795580E-92CB-4597-BC8E-51164F712830}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7795580E-92CB-4597-BC8E-51164F712830}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7795580E-92CB-4597-BC8E-51164F712830}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7795580E-92CB-4597-BC8E-51164F712830}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7795580E-92CB-4597-BC8E-51164F712830}.Tools|Any CPU.ActiveCfg = Debug|Any CPU
+		{7795580E-92CB-4597-BC8E-51164F712830}.Tools|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4C67C670-FA78-41F0-B12B-0240C0CD50C9}
+	EndGlobalSection
+EndGlobal

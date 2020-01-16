@@ -1,4 +1,4 @@
-using Godot;
+
 using System;
 using System.Linq;
 using System.Collections.Concurrent;
@@ -75,7 +75,7 @@ namespace JobSystem
 
 		public void test()
 		{
-			System.Threading.ThreadPool.
+			//System.Threading.ThreadPool.
 
 
 		}
@@ -83,8 +83,8 @@ namespace JobSystem
 
 	public class JobDetails
 	{
-		public  List<Job> dependsOn;
-		public  List<Job> holdingUp;
+		//public  List<Job> dependsOn;
+		//public  List<Job> holdingUp;
 
 		public  int input;
 
@@ -201,8 +201,8 @@ struct FloatInspector
 [StructLayout(LayoutKind.Explicit)]
 struct Vector3Inspector
 {
-	[FieldOffset(0)]
-	public Vector3 val;
+	//[FieldOffset(0)]
+	//public Vector3 val;
 	[FieldOffset(0)]
 	public FloatInspector x;
 	[FieldOffset(4)]

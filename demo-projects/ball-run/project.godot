@@ -23,11 +23,13 @@ config/icon="res://icon.png"
 
 window/size/width=1920
 window/size/height=1080
+window/vsync/use_vsync=false
+window/vsync/vsync_via_compositor=false
 window/stretch/mode="2d"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "mono_debugger" )
+enabled=PoolStringArray( "MonoDiagLabel", "mono_debugger" )
 
 [input]
 
@@ -66,10 +68,13 @@ debugger_agent/wait_timeout=130000
 
 [physics]
 
-common/physics_jitter_fix=0.0
+common/physics_jitter_fix=1.0
 
 [rendering]
 
 threads/thread_model=2
-quality/filters/msaa=2
+quality/reflections/texture_array_reflections=false
+quality/reflections/high_quality_ggx=false
+quality/filters/msaa=1
+quality/depth/hdr=false
 environment/default_environment="res://default_env.tres"

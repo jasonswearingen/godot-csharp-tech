@@ -1,0 +1,5 @@
+C:\repos\godot\godot-csharp-tech\lib\src\godot-csharp-tech\bin\Debug\netstandard2.0\godot-csharp-tech.deps.json
+C:\repos\godot\godot-csharp-tech\lib\src\godot-csharp-tech\bin\Debug\netstandard2.0\godot-csharp-tech.dll
+C:\repos\godot\godot-csharp-tech\lib\src\godot-csharp-tech\obj\Debug\netstandard2.0\godot-csharp-tech.csprojAssemblyReference.cache
+C:\repos\godot\godot-csharp-tech\lib\src\godot-csharp-tech\obj\Debug\netstandard2.0\godot-csharp-tech.AssemblyInfoInputs.cache
+C:\repos\godot\godot-csharp-tech\lib\src\godot-csharp-tech\obj\Debug\netstandard2.0\godot-csharp-tech.AssemblyInfo.cs
