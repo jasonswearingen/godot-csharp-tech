@@ -10,6 +10,8 @@
     <DocumentationFile>../../bin\godot-csharp-tech.xml</DocumentationFile>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -19,6 +21,15 @@
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GodotSharp">
+      <HintPath>..\..\..\demo-projects\ball-run\.mono\assemblies\Debug\GodotSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GodotSharpEditor">
+      <HintPath>..\..\..\demo-projects\ball-run\.mono\assemblies\Debug\GodotSharpEditor.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

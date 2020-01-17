@@ -64,6 +64,7 @@ ui_down={
 
 [mono]
 
+debugger_agent/wait_for_debugger=true
 debugger_agent/wait_timeout=130000
 
 [physics]
