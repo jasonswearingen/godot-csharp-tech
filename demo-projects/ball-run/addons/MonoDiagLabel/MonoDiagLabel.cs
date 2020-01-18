@@ -6,6 +6,7 @@
 
 using Godot;
 using System;
+using System.Text;
 
 [Tool]
 public class MonoDiagLabel : Godot.CanvasLayer
@@ -22,9 +23,17 @@ public class MonoDiagLabel : Godot.CanvasLayer
 	[Export]
 	public int updatesPerSecond = 2;
 
+	[Export]
+	public bool showFrameInfo = true;
+	[Export]
+	public bool showPhysicInfo = true;
+	[Export]
+	public bool showGcInfo = true;
+
 	public System.Diagnostics.Stopwatch sw;
 	public TimeSpan updateFrequency;
 
+	private StringBuilder sb = new StringBuilder(500);
 
 	public Label label;
 
@@ -98,23 +107,38 @@ public class MonoDiagLabel : Godot.CanvasLayer
 
 	}
 
+
 	private void _setLabelText()
 	{
+		sb.Clear();
+
+		if (showFrameInfo)
+		{
+			sb.Append($"FPS={Engine.GetFramesPerSecond()}  ({Engine.GetFramesDrawn()} Total Frames)");
+		}
+		if (showPhysicInfo)
+		{
+			var phyInterpFrac = Engine.GetPhysicsInterpolationFraction();
+			var phyInFrame = Engine.IsInPhysicsFrame();
+			var phyItterPerSec = Engine.IterationsPerSecond;
+
+			var activeObjects = PhysicsServer.GetProcessInfo(PhysicsServer.ProcessInfo.ActiveObjects);
+			var collisionPairs = PhysicsServer.GetProcessInfo(PhysicsServer.ProcessInfo.CollisionPairs);
+			var islandCount =PhysicsServer.GetProcessInfo(PhysicsServer.ProcessInfo.IslandCount);
+
+			sb.Append($"\nPhysics: Itter/sec={phyItterPerSec} inPhyFrame={phyInFrame} interpFrac={phyInterpFrac} activeObj={activeObjects} colPairs={collisionPairs} islands={islandCount}");
+		}
+		if (showGcInfo)
+		{
+			var totMem = GC.GetTotalMemory(false) / 1024;
+			var gcCount = new int[] { GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2) };
+
+			sb.Append($"\nGC: Collects/Gen={string.Join(",", gcCount)}   ({totMem}K Total Alloc)");
+		}
 
 
 
-		var totMem = GC.GetTotalMemory(false) / 1024;
-
-		var gcCount = new int[] { GC.CollectionCount(0), GC.CollectionCount(1), GC.CollectionCount(2) };
-
-		var phyInterpFrac = Engine.GetPhysicsInterpolationFraction();
-		var phyInFrame = Engine.IsInPhysicsFrame();
-		var phyItterPerSec = Engine.IterationsPerSecond;
-
-
-
-
-		label.Text = $"FPS={Engine.GetFramesPerSecond()}  ({Engine.GetFramesDrawn()} Total Frames)   \nPhysics: Itter/sec={phyItterPerSec} inPhyFrame={phyInFrame} interpFrac={phyInterpFrac}   \nGC: Collects/Gen={string.Join(",", gcCount)}   ({totMem}K Total Alloc)";
+		label.Text = sb.ToString();
 
 
 
