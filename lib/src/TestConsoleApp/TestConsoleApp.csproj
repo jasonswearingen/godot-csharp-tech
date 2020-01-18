@@ -19,4 +19,8 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ThreadStorm\ThreadStorm.csproj" />
+  </ItemGroup>
+
 </Project>

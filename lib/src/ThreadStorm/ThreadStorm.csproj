@@ -20,11 +20,11 @@
 
   <ItemGroup>
     <PackageReference Include="System.Memory" Version="4.5.3" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Job\" />
     <Folder Include="Runtime\_Advanced\" />
   </ItemGroup>
 

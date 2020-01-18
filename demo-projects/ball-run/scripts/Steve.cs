@@ -31,7 +31,12 @@ public unsafe class Steve : KinematicBody
 	public override void _PhysicsProcess(float delta)
 	{
 
+		if (Input.IsActionJustPressed("ui_shift"))
+		{
+			velocity *= 3;
+		}
 
+		//if(this.posit)
 
 		/// <summary>
 		/// store our fall speed (gravity) because this will be destroyed by our motion computations...
@@ -44,6 +49,12 @@ public unsafe class Steve : KinematicBody
 			x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left"),
 			z = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
 		};
+
+
+		if (this.Translation.y < -20)
+		{
+			this.Translation = new Vector3(0, 2, 0);
+		}
 
 		if (motion.Length() > 1)
 		{
