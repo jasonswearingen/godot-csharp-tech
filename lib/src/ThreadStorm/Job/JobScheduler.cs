@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 
 namespace ThreadStorm.Job
 {
+
+    //TODO:  look into  Entitas-CSharp for some ECS architecture ideas, maybe also jobs, but probably not.  https://github.com/sschmid/Entitas-CSharp
+
     public class JobScheduler
     {
 

@@ -15,6 +15,8 @@ public class SimManager : Node
 	public override void _Ready()
 	{
 		//PhysicsServer.
+
+		//var instance = VisualServer.create
 	}
 
 	public override void _Process(float delta)

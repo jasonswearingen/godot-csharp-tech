@@ -10,7 +10,7 @@
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
@@ -22,10 +22,6 @@
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Runtime\_Advanced\" />
   </ItemGroup>
 
 </Project>
