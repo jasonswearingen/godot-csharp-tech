@@ -19,18 +19,16 @@ public class MonoDiagLabel : Godot.CanvasLayer
 
 	public enum POSITION
 	{
-		TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER
+		TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_CENTER, CENTER
 	}
 	[Export]
-	public POSITION position = POSITION.TOP_RIGHT;
+	public POSITION position = POSITION.TOP_CENTER;
 	[Export]
 	public int margin = 5;
 
 	[Export]
 	public float labelUpdatesPerSecond = 0.5f;
 
-	[Export]
-	public float samplesPerSecond = 2;
 
 	[Export]
 	public bool showFrameInfo = true;
@@ -39,7 +37,16 @@ public class MonoDiagLabel : Godot.CanvasLayer
 	[Export]
 	public bool showGcInfo = true;
 
-	public System.Diagnostics.Stopwatch sw;
+	[Export]
+	public Color fontColor = new Color(0, 0, 0);
+	[Export]
+	public Color fontShadowColor = new Color(1,1,1);
+
+
+	/// <summary>
+	/// stopwatch that tracks when to update label
+	/// </summary>
+	public System.Diagnostics.Stopwatch labelUpdateStopwatch;
 	public TimeSpan labelUpdateFrequency;
 	public TimeSpan historyLength;
 
@@ -55,22 +62,32 @@ public class MonoDiagLabel : Godot.CanvasLayer
 	{
 		base._Ready();
 
-		//if window resizes, update our position
-		this.GetTree().Root.Connect("size_changed", this, "updatePosition");
+		//if (label != null)
+		//{
+		//	RemoveChild(label);
+		//	label.Dispose();
+		//}
+		//add label as child
+		label = new Label();
 
+
+		label.AddColorOverride("font_color", fontColor);
+		label.AddColorOverride("font_color_shadow",fontShadowColor);
+		
+
+		AddChild(label);
+
+
+		//if window resizes, update our position, only helps if Project --> Display --> Window --> Stretch --> Mode == "disabled", so not doing it by default
+		//this.GetTree().Root.Connect("size_changed", this, "updatePosition");
+	
 		//set our initial position
-		//        _setLabelText();
 		updatePosition();
-
 
 		//set our update frequency
 		this.labelUpdateFrequency = TimeSpan.FromSeconds(1 / labelUpdatesPerSecond);
 		this.historyLength = TimeSpan.FromSeconds(labelUpdateFrequency.TotalSeconds * 10);
-		this.sw = System.Diagnostics.Stopwatch.StartNew();
-
-		//this.renderTime.timer = new Stopwatch();
-		//framePerf = new _PerfTimer(updateFrequency, historyLength);
-		//framePerf.Restart();
+		this.labelUpdateStopwatch = System.Diagnostics.Stopwatch.StartNew();
 
 		isInitialized = true;
 		this.ProcessPriority = int.MinValue;
@@ -79,15 +96,10 @@ public class MonoDiagLabel : Godot.CanvasLayer
 
 
 	}
-	//private System.Diagnostics.Stopwatch renderTimer = new System.Diagnostics.Stopwatch();
-
-
-	//private _PerfTimer framePerf;
 
 	private _PerfTimer totalFramePerf = new _PerfTimer("totalFrameMs");
 
-
-	//private (Stopwatch timer, TimeSpan min, TimeSpan max, int count, TimeSpan total) renderTime;
+	private _PerfSampler<int> fpsPerf = new _PerfSampler<int>("FPS");
 
 	public override void _Process(float delta)
 	{
@@ -102,6 +114,8 @@ public class MonoDiagLabel : Godot.CanvasLayer
 		totalFramePerf.EndSample();
 		totalFramePerf.BeginSample();
 
+		fpsPerf.Sample((int)Engine.GetFramesPerSecond());
+
 		if (treeEndHelper == null)
 		{
 			//so we can track in-tree vs out-tree times
@@ -111,40 +125,13 @@ public class MonoDiagLabel : Godot.CanvasLayer
 		}
 		treeEndHelper.OnTreeProcessStart();
 
-		//System.Threading.Thread.Sleep(10);
 
 
 
-
-		//framePerf.Lap();
-
-		////store info in min/max frame time
-		//    var frameElapsed = renderTime.timer.Elapsed;
-		//renderTime.timer.Restart();
-		//renderTime.count++;
-		//renderTime.total += frameElapsed;
-		//if (renderTime.max < frameElapsed)
-		//{
-		//    renderTime.max = frameElapsed;
-		//}
-		//if (renderTime.min == TimeSpan.Zero || renderTime.min > frameElapsed)
-		//{
-		//    renderTime.min = frameElapsed;
-		//}
-
-
-
-		if (this.sw.Elapsed >= this.labelUpdateFrequency)
+		if (this.labelUpdateStopwatch.Elapsed >= this.labelUpdateFrequency)
 		{
-			this.sw.Restart();
+			this.labelUpdateStopwatch.Restart();
 			_setLabelText();
-
-			////reset renderTime counters
-			//renderTime.min = TimeSpan.Zero;
-			//renderTime.max = TimeSpan.Zero;
-			//renderTime.count = 0;
-			//renderTime.total = TimeSpan.Zero;
-
 		}
 
 	}
@@ -156,18 +143,8 @@ public class MonoDiagLabel : Godot.CanvasLayer
 	/// </summary>
 	public void updatePosition()
 	{
-		if (label != null)
-		{
-			RemoveChild(label);
-			label.Dispose();
-		}
-		//add label as child
-		label = new Label();
-		AddChild(label);
-
 		var viewport_size = GetViewport().Size;
 		var label_size = label.RectSize;
-
 
 		switch (this.position)
 		{
@@ -177,7 +154,7 @@ public class MonoDiagLabel : Godot.CanvasLayer
 				label.GrowVertical = Control.GrowDirection.End;
 				break;
 			case POSITION.BOTTOM_LEFT:
-				this.Offset = new Vector2(margin, viewport_size.y - margin - label_size.y);
+				this.label.RectPosition = new Vector2(margin, viewport_size.y - margin - label_size.y);
 				label.GrowHorizontal = Control.GrowDirection.End;
 				label.GrowVertical = Control.GrowDirection.Begin;
 				break;
@@ -196,9 +173,12 @@ public class MonoDiagLabel : Godot.CanvasLayer
 				label.GrowHorizontal = Control.GrowDirection.Both;
 				label.GrowVertical = Control.GrowDirection.Both;
 				break;
+			case POSITION.TOP_CENTER:
+				this.Offset = new Vector2((viewport_size.x - margin - label_size.x)/2, margin);
+				label.GrowHorizontal = Control.GrowDirection.Both;
+				label.GrowVertical = Control.GrowDirection.End;
+				break;
 		}
-
-
 	}
 
 
@@ -208,18 +188,11 @@ public class MonoDiagLabel : Godot.CanvasLayer
 
 		if (showFrameInfo)
 		{
-			sb.Append($"FPS ={ Engine.GetFramesPerSecond()}");//  FrameDetail= {framePerf.ReportToString(this.updateFrequency)}");
+			sb.Append($"{fpsPerf.GetHistoryString(this.labelUpdateFrequency)}");
 			sb.Append($"\n{totalFramePerf.GetHistoryString(this.labelUpdateFrequency)}");
 			sb.Append($"\n{treeEndHelper.insideTreePerf.GetHistoryString(this.labelUpdateFrequency)}");
 			sb.Append($"\n{treeEndHelper.outsideTreePerf.GetHistoryString(this.labelUpdateFrequency)}");
 			sb.Append($"\n");
-			//sb.Append($"\nInside Tree ={treeEndHelper.treeInsideTimer.ReportToString(this.updateFrequency)}  Outside Tree ={treeEndHelper.treeOutsideTimer.ReportToString(this.updateFrequency)}");
-			//var min = renderTime.min.TotalMilliseconds.ToString("F1");
-			//var avg = (renderTime.total.TotalMilliseconds / renderTime.count).ToString("F1");
-			//var max = renderTime.max.TotalMilliseconds.ToString("F1");
-
-			//sb.Append($"FPS={Engine.GetFramesPerSecond()} ({Engine.GetFramesDrawn()} Total Frames)");
-			//sb.Append($"\nFrame time (in Ms) over last second: Min/Avg/Max= {min} / {avg} / {max}");
 		}
 		if (showPhysicInfo)
 		{
@@ -257,11 +230,6 @@ namespace __MonoDiagLabel_internal
 
 	class _MonoDiagLabel_TreeEndHelper : Godot.Node
 	{
-
-		public MonoDiagLabel parent;
-
-
-
 		public _PerfTimer insideTreePerf = new _PerfTimer("insideTreeMs");
 		public _PerfTimer outsideTreePerf = new _PerfTimer("outsideTreeMs");
 
@@ -270,9 +238,6 @@ namespace __MonoDiagLabel_internal
 
 		public _MonoDiagLabel_TreeEndHelper(TimeSpan sampleInterval, TimeSpan historyLength)
 		{
-			//treeInsideTimer = new _PerfTimer(sampleInterval, historyLength);
-			//treeOutsideTimer = new _PerfTimer(sampleInterval, historyLength);
-
 			this.sampleInterval = sampleInterval;
 		}
 
@@ -282,21 +247,10 @@ namespace __MonoDiagLabel_internal
 
 			//make update last
 			this.ProcessPriority = int.MaxValue;
-
-			//this.treeInsideTimer.Restart();
-			//this.treeOutsideTimer.Restart();
-
 		}
 		public override void _Process(float delta)
 		{
 			base._Process(delta);
-
-			//exec at tree end
-
-			//treeInsideTimer.Pause();
-			//treeInsideTimer.Lap();
-
-			//treeOutsideTimer.Unpause();
 
 			insideTreePerf.EndSample();
 			outsideTreePerf.BeginSample();
@@ -305,17 +259,9 @@ namespace __MonoDiagLabel_internal
 
 		public void OnTreeProcessStart()
 		{
-			//treeOutsideTimer.Pause();
-			//treeOutsideTimer.Lap();
-
-			//treeInsideTimer.Unpause();
-
 			outsideTreePerf.EndSample();
 			insideTreePerf.BeginSample();
-
 		}
-
-
 	}
 
 	public static class _Stats
@@ -478,7 +424,7 @@ namespace __MonoDiagLabel_internal
 		}
 	}
 
-	public abstract class _PerfSampler<T> where T : unmanaged, IComparable<T>
+	public class _PerfSampler<T> where T : unmanaged, IComparable<T>
 	{
 
 
@@ -662,7 +608,7 @@ namespace __MonoDiagLabel_internal
 
 		protected override string _QuartileToString(_Stats.Quartiles<TimeSpan> hist)
 		{
-			return $"{name} Quantiles (ms): {hist.q0.TotalMilliseconds.ToString("F1") } / {hist.q1.TotalMilliseconds.ToString("F1") } / {hist.q2.TotalMilliseconds.ToString("F1") } / {hist.q3.TotalMilliseconds.ToString("F1") } / {hist.q4.TotalMilliseconds.ToString("F1") } ({hist.count} samples)";
+			return $"{name} Quantiles: {hist.q0.TotalMilliseconds.ToString("F1") } / {hist.q1.TotalMilliseconds.ToString("F1") } / {hist.q2.TotalMilliseconds.ToString("F1") } / {hist.q3.TotalMilliseconds.ToString("F1") } / {hist.q4.TotalMilliseconds.ToString("F1") } ({hist.count} samples)";
 		}
 
 
