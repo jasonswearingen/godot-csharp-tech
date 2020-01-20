@@ -9,500 +9,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using __MonoDiagLabel_internal;
 
 [Tool]
 public class MonoDiagLabel : Godot.CanvasLayer
 {
 
-	class _MonoDiagLabel_TreeEndHelper : Godot.Node
-	{
 
-		public MonoDiagLabel parent;
 
-
-		//public _PerfTimer treeInsideTimer;
-
-		//public TimeSpan lastTreeElapsed;
-		//public _PerfTimer treeOutsideTimer;
-
-		public _PerfTimer2 insideTreePerf = new _PerfTimer2("insideTree");
-		public _PerfTimer2 outsideTreePerf = new _PerfTimer2("outsideTree");
-
-		public TimeSpan sampleInterval;
-
-
-		public _MonoDiagLabel_TreeEndHelper(TimeSpan sampleInterval, TimeSpan historyLength)
-		{
-			//treeInsideTimer = new _PerfTimer(sampleInterval, historyLength);
-			//treeOutsideTimer = new _PerfTimer(sampleInterval, historyLength);
-
-			this.sampleInterval = sampleInterval;
-		}
-
-		public override void _Ready()
-		{
-			base._Ready();
-
-			//make update last
-			this.ProcessPriority = int.MaxValue;
-
-			//this.treeInsideTimer.Restart();
-			//this.treeOutsideTimer.Restart();
-
-		}
-		public override void _Process(float delta)
-		{
-			base._Process(delta);
-
-			//exec at tree end
-
-			//treeInsideTimer.Pause();
-			//treeInsideTimer.Lap();
-
-			//treeOutsideTimer.Unpause();
-
-			insideTreePerf.EndSample();
-			outsideTreePerf.BeginSample();
-		}
-
-
-		public void OnTreeProcessStart()
-		{
-			//treeOutsideTimer.Pause();
-			//treeOutsideTimer.Lap();
-
-			//treeInsideTimer.Unpause();
-
-			outsideTreePerf.EndSample();
-			insideTreePerf.BeginSample();
-
-		}
-
-
-	}
-
-	public static class _Stats
-	{
-		public struct Quartiles<T>
-		{
-			public T q0;
-			public T q1;
-			public T q2;
-			public T q3;
-			public T q4;
-
-			public int count;
-
-			public override string ToString()
-			{
-				return $"{q0} / {q1} / {q2}  / {q3} / {q4}  ({count} samples)";
-			}
-		}
-
-		/// <summary>
-		/// Return the quartile values of an ordered set of doubles
-		///   assume the sorting has already been done.
-		///   
-		/// This actually turns out to be a bit of a PITA, because there is no universal agreement 
-		///   on choosing the quartile values. In the case of odd values, some count the median value
-		///   in finding the 1st and 3rd quartile and some discard the median value. 
-		///   the two different methods result in two different answers.
-		///   The below method produces the arithmatic mean of the two methods, and insures the median
-		///   is given it's correct weight so that the median changes as smoothly as possible as 
-		///   more data ppints are added.
-		///    
-		/// This method uses the following logic:
-		/// 
-		/// ===If there are an even number of data points:
-		///    Use the median to divide the ordered data set into two halves. 
-		///    The lower quartile value is the median of the lower half of the data. 
-		///    The upper quartile value is the median of the upper half of the data.
-		///    
-		/// ===If there are (4n+1) data points:
-		///    The lower quartile is 25% of the nth data value plus 75% of the (n+1)th data value.
-		///    The upper quartile is 75% of the (3n+1)th data point plus 25% of the (3n+2)th data point.
-		///    
-		///===If there are (4n+3) data points:
-		///   The lower quartile is 75% of the (n+1)th data value plus 25% of the (n+2)th data value.
-		///   The upper quartile is 25% of the (3n+2)th data point plus 75% of the (3n+3)th data point.
-		/// 
-		/// </summary>
-		static public Quartiles<float> ComputeQuartiles(Span<float> afVal, int length)
-		{
-			int iSize = length;
-			int iMid = iSize / 2; //this is the mid from a zero based index, eg mid of 7 = 3;
-
-			var toReturn = new Quartiles<float>();
-
-			toReturn.count = length;
-			//q0 and q4
-			toReturn.q0 = afVal[0];
-			toReturn.q4 = afVal[length - 1];
-
-			if (iSize % 2 == 0)
-			{
-				//================ EVEN NUMBER OF POINTS: =====================
-				//even between low and high point
-				toReturn.q2 = (afVal[iMid - 1] + afVal[iMid]) / 2;
-
-				int iMidMid = iMid / 2;
-
-				//easy split 
-				if (iMid % 2 == 0)
-				{
-					toReturn.q1 = (afVal[iMidMid - 1] + afVal[iMidMid]) / 2;
-					toReturn.q3 = (afVal[iMid + iMidMid - 1] + afVal[iMid + iMidMid]) / 2;
-				}
-				else
-				{
-					toReturn.q1 = afVal[iMidMid];
-					toReturn.q3 = afVal[iMidMid + iMid];
-				}
-			}
-			else if (iSize == 1)
-			{
-				//================= special case, sorry ================
-				toReturn.q1 = afVal[0];
-				toReturn.q2 = afVal[0];
-				toReturn.q3 = afVal[0];
-			}
-			else
-			{
-				//odd number so the median is just the midpoint in the array.
-				toReturn.q2 = afVal[iMid];
-
-				if ((iSize - 1) % 4 == 0)
-				{
-					//======================(4n-1) POINTS =========================
-					int n = (iSize - 1) / 4;
-					toReturn.q1 = (afVal[n - 1] * .25f) + (afVal[n] * .75f);
-					toReturn.q3 = (afVal[3 * n] * .75f) + (afVal[3 * n + 1] * .25f);
-				}
-				else if ((iSize - 3) % 4 == 0)
-				{
-					//======================(4n-3) POINTS =========================
-					int n = (iSize - 3) / 4;
-
-					toReturn.q1 = (afVal[n] * .75f) + (afVal[n + 1] * .25f);
-					toReturn.q3 = (afVal[3 * n + 1] * .25f) + (afVal[3 * n + 2] * .75f);
-				}
-			}
-
-			return toReturn;
-		}
-
-		/// <summary>
-		/// returns quartiles (0th, 1st, 2nd, 3rd, 4th, 5th.)
-		/// 
-		/// see: https://en.wikipedia.org/wiki/Quantile#Examples
-		/// 
-		/// This generic overload returns discrete values:  the items at those quartile indicies rounded down.  (no averaging of values)
-		/// the float based overload will average results.
-		/// </summary>
-		static public Quartiles<T> ComputeQuartiles<T>(Span<T> afVal, int length)
-		{
-			int iSize = length;
-			int iMid = iSize / 2; //this is the mid from a zero based index, eg mid of 7 = 3;
-
-			var toReturn = new Quartiles<T>();
-
-			toReturn.count = length;
-			//q0 and q4
-			toReturn.q0 = afVal[0];
-			toReturn.q4 = afVal[length - 1];
-
-			toReturn.q2 = afVal[iMid];
-
-			int iMidMid = iMid / 2;
-			toReturn.q1 = afVal[iMidMid];
-			toReturn.q3 = afVal[iMid + iMidMid];
-
-
-
-			return toReturn;
-
-
-		}
-	}
-
-	public class _PerfTimer2
-	{
-
-
-		private struct PerfInfo : IComparable<PerfInfo>
-		{
-			public TimeSpan sample;
-			public TimeSpan wall;
-
-			public int CompareTo(PerfInfo other)
-			{
-				return (int)(sample.Ticks - other.sample.Ticks);
-			}
-
-			public override string ToString()
-			{
-				return $"sample={sample}, wall={wall}";
-			}
-		}
-		/// <summary>
-		/// tracks wall time, used for getting history over the last N seconds
-		/// </summary>
-		private Stopwatch wallTimer = new Stopwatch();
-		/// <summary>
-		/// tracks time inside a sample
-		/// </summary>
-		private Stopwatch sampleTimer = new Stopwatch();
-
-		private Queue<PerfInfo> history;
-
-		private int maxHistory;
-
-		private string name;
-		public _PerfTimer2(string name, int maxHistory = 1000)
-		{
-			this.name = name;
-			this.maxHistory = maxHistory;
-			this.history = new Queue<PerfInfo>(maxHistory);
-			this._tempHist = new PerfInfo[maxHistory];
-			wallTimer.Start();
-		}
-
-		public void BeginSample()
-		{
-			sampleTimer.Restart();
-		}
-
-		public TimeSpan EndSample()
-		{
-			sampleTimer.Stop();
-			var toReturn = sampleTimer.Elapsed;
-
-			//keep our hist under max size
-			while (history.Count >= maxHistory)
-			{
-				history.Dequeue();
-			}
-			history.Enqueue(new PerfInfo() { sample = toReturn, wall = wallTimer.Elapsed });
-
-			return toReturn;
-
-		}
-		public void Pause()
-		{
-			sampleTimer.Stop();
-		}
-
-		public void Unpause()
-		{
-			sampleTimer.Start();
-		}
-
-		/// <summary>
-		/// stores in chrono order (first inserted to last inserted)
-		/// </summary>
-		private PerfInfo[] _tempHist;
-		public _Stats.Quartiles<TimeSpan> GetHistory(int samples)
-		{
-			var actualSamples = Math.Min(history.Count, samples);
-			return _GetHistoryHelper(0, actualSamples);
-		}
-
-
-		private _Stats.Quartiles<TimeSpan> _GetHistoryHelper(int startIndex, int length)
-		{
-			if (length == 0)
-			{
-				return default;
-			}
-			history.CopyTo(_tempHist, 0);
-			Array.Reverse(_tempHist, 0, history.Count);  //only referse length coppied by previous line
-																									 //var actualSamples = Math.Min(history.Count, samples);
-			Array.Sort(_tempHist, startIndex, length);
-
-			Span<TimeSpan> _tempFloats = stackalloc TimeSpan[length];
-			var endIndex = startIndex + length;
-			var tempIndex = 0;
-			for (var i = startIndex; i < endIndex; i++)
-			{
-				_tempFloats[tempIndex] = _tempHist[i].sample;
-				tempIndex++;
-			}
-
-			var toReturn = _Stats.ComputeQuartiles(_tempFloats, length);
-
-
-			return toReturn;
-
-		}
-
-		public _Stats.Quartiles<TimeSpan> GetHistory(TimeSpan wallInterval, TimeSpan startingFrom = default)
-		{
-
-
-			history.CopyTo(_tempHist, 0);
-			Array.Reverse(_tempHist, 0, history.Count); //only referse length coppied by previous line
-
-			var now = wallTimer.Elapsed;
-
-			var startIndexTime = now - startingFrom;
-			var endIndexTime = startIndexTime - wallInterval; //working our way backwards through time
-
-
-			//get indexes for stard/end
-			var startIndex = 0;
-			var length = 0;
-			for (var i = 0; i < history.Count; i++)
-			{
-				var current = _tempHist[i];
-				if (current.wall > startIndexTime)
-				{
-					startIndex++;
-					continue;
-				}
-
-				if (current.wall < endIndexTime)
-				{
-					break;
-				}
-				length++;
-			}
-
-			return _GetHistoryHelper(startIndex, length);
-
-		}
-
-		public string GetHistoryString(int samples)
-		{
-			var quart = GetHistory(samples);
-			return QuartileToString(quart);
-		}
-
-		public string GetHistoryString(TimeSpan wallInterval, TimeSpan startingFrom = default)
-		{
-			var quart = GetHistory(wallInterval, startingFrom);
-			return QuartileToString(quart);
-		}
-
-		public string QuartileToString(_Stats.Quartiles<TimeSpan> hist)
-		{
-			return $"{name} Quantiles: {hist.q0.TotalMilliseconds.ToString("F1") } / {hist.q1.TotalMilliseconds.ToString("F1") } / {hist.q2.TotalMilliseconds.ToString("F1") } / {hist.q3.TotalMilliseconds.ToString("F1") } / {hist.q4.TotalMilliseconds.ToString("F1") } / ({hist.count} samples)";
-		}
-
-
-	}
-
-	public class _PerfTimer
-	{
-
-
-		Stopwatch timer = new Stopwatch();
-
-		public TimeSpan measureInterval;
-		public TimeSpan historyLength;
-
-
-		TimeSpan min;
-		TimeSpan max;
-		int count;
-		TimeSpan total;
-
-		public List<(TimeSpan min, TimeSpan max, int count, TimeSpan total, TimeSpan pause)> history = new List<(TimeSpan min, TimeSpan max, int count, TimeSpan total, TimeSpan pause)>();
-
-		public _PerfTimer(TimeSpan sampleInterval, TimeSpan historyLength)
-		{
-			this.measureInterval = sampleInterval;
-			this.historyLength = historyLength;
-		}
-
-		Stopwatch pauseTimer = new Stopwatch();
-
-		public void Restart()
-		{
-			pauseTimer.Reset();
-			timer.Restart();
-			min = TimeSpan.Zero;
-			max = TimeSpan.Zero;
-			count = 0;
-			total = TimeSpan.Zero;
-		}
-
-		public void Pause()
-		{
-			pauseTimer.Start();
-			//timer.Stop();
-		}
-		public void Unpause()
-		{
-			//timer.Start();
-			pauseTimer.Stop();
-		}
-
-		public void Lap()
-		{
-			var elapsed = timer.Elapsed;
-			if (min == TimeSpan.Zero || min > elapsed)
-			{
-				min = elapsed;
-			}
-			if (max < elapsed)
-			{
-				max = elapsed;
-			}
-			count++;
-			total += elapsed;
-			if (total >= measureInterval)
-			{
-				_ArchiveHelper();
-				Restart();
-			}
-
-		}
-
-		private void _ArchiveHelper()
-		{
-			var maxSamples = (int)(historyLength.Ticks / measureInterval.Ticks);
-			history.Insert(0, (min, max, count, total: total, pause: pauseTimer.Elapsed));
-			if (history.Count > maxSamples)
-			{
-				history.RemoveRange(maxSamples, history.Count - maxSamples);
-			}
-		}
-
-		public (TimeSpan min, TimeSpan max, int count, TimeSpan total, TimeSpan pause) Report(TimeSpan targetInterval)
-		{
-			(TimeSpan min, TimeSpan max, int count, TimeSpan total, TimeSpan pause) toReturn = default;
-			var index = 0;
-
-			while (toReturn.total < targetInterval && history.Count > index)
-			{
-				var sample = history[index];
-				if (toReturn.min == TimeSpan.Zero || toReturn.min > sample.min)
-				{
-					toReturn.min = sample.min;
-				}
-				if (toReturn.max < sample.max)
-				{
-					toReturn.max = sample.max;
-				}
-				toReturn.count += sample.count;
-				toReturn.total += sample.total;
-				toReturn.pause += sample.pause;
-				index++;
-			}
-			toReturn.total -= toReturn.pause;
-			return toReturn;
-		}
-
-		public string ReportToString(TimeSpan targetInterval)
-		{
-			return ReportToString(this.Report(targetInterval));
-		}
-		public static string ReportToString((TimeSpan min, TimeSpan max, int count, TimeSpan total, TimeSpan pause) tuple)
-		{
-			var tupAvg = tuple.total.TotalMilliseconds / tuple.count;
-			return $"Ms Min/Avg/Max/Tot= {tuple.min.TotalMilliseconds.ToString("F2")} / {tupAvg.ToString("F2")} / {tuple.max.TotalMilliseconds.ToString("F2")} / {tuple.total.TotalMilliseconds.ToString("F2")} ({tuple.count} samples, {tuple.pause.TotalMilliseconds.ToString("F2")} paused)";
-		}
-	}
 	public enum POSITION
 	{
 		TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER
@@ -570,7 +84,7 @@ public class MonoDiagLabel : Godot.CanvasLayer
 
 	//private _PerfTimer framePerf;
 
-	private _PerfTimer2 totalFramePerf = new _PerfTimer2("totalFrame");
+	private _PerfTimer totalFramePerf = new _PerfTimer("totalFrameMs");
 
 
 	//private (Stopwatch timer, TimeSpan min, TimeSpan max, int count, TimeSpan total) renderTime;
@@ -737,3 +251,420 @@ public class MonoDiagLabel : Godot.CanvasLayer
 
 }
 
+
+namespace __MonoDiagLabel_internal
+{
+
+	class _MonoDiagLabel_TreeEndHelper : Godot.Node
+	{
+
+		public MonoDiagLabel parent;
+
+
+
+		public _PerfTimer insideTreePerf = new _PerfTimer("insideTreeMs");
+		public _PerfTimer outsideTreePerf = new _PerfTimer("outsideTreeMs");
+
+		public TimeSpan sampleInterval;
+
+
+		public _MonoDiagLabel_TreeEndHelper(TimeSpan sampleInterval, TimeSpan historyLength)
+		{
+			//treeInsideTimer = new _PerfTimer(sampleInterval, historyLength);
+			//treeOutsideTimer = new _PerfTimer(sampleInterval, historyLength);
+
+			this.sampleInterval = sampleInterval;
+		}
+
+		public override void _Ready()
+		{
+			base._Ready();
+
+			//make update last
+			this.ProcessPriority = int.MaxValue;
+
+			//this.treeInsideTimer.Restart();
+			//this.treeOutsideTimer.Restart();
+
+		}
+		public override void _Process(float delta)
+		{
+			base._Process(delta);
+
+			//exec at tree end
+
+			//treeInsideTimer.Pause();
+			//treeInsideTimer.Lap();
+
+			//treeOutsideTimer.Unpause();
+
+			insideTreePerf.EndSample();
+			outsideTreePerf.BeginSample();
+		}
+
+
+		public void OnTreeProcessStart()
+		{
+			//treeOutsideTimer.Pause();
+			//treeOutsideTimer.Lap();
+
+			//treeInsideTimer.Unpause();
+
+			outsideTreePerf.EndSample();
+			insideTreePerf.BeginSample();
+
+		}
+
+
+	}
+
+	public static class _Stats
+	{
+		public struct Quartiles<T>
+		{
+			public T q0;
+			public T q1;
+			public T q2;
+			public T q3;
+			public T q4;
+
+			public int count;
+
+			public override string ToString()
+			{
+				return $"{q0} / {q1} / {q2}  / {q3} / {q4} ({count} samples)";
+			}
+		}
+
+		/// <summary>
+		/// Return the quartile values of an ordered set of doubles
+		///   assume the sorting has already been done.
+		///   
+		/// This actually turns out to be a bit of a PITA, because there is no universal agreement 
+		///   on choosing the quartile values. In the case of odd values, some count the median value
+		///   in finding the 1st and 3rd quartile and some discard the median value. 
+		///   the two different methods result in two different answers.
+		///   The below method produces the arithmatic mean of the two methods, and insures the median
+		///   is given it's correct weight so that the median changes as smoothly as possible as 
+		///   more data ppints are added.
+		///    
+		/// This method uses the following logic:
+		/// 
+		/// ===If there are an even number of data points:
+		///    Use the median to divide the ordered data set into two halves. 
+		///    The lower quartile value is the median of the lower half of the data. 
+		///    The upper quartile value is the median of the upper half of the data.
+		///    
+		/// ===If there are (4n+1) data points:
+		///    The lower quartile is 25% of the nth data value plus 75% of the (n+1)th data value.
+		///    The upper quartile is 75% of the (3n+1)th data point plus 25% of the (3n+2)th data point.
+		///    
+		///===If there are (4n+3) data points:
+		///   The lower quartile is 75% of the (n+1)th data value plus 25% of the (n+2)th data value.
+		///   The upper quartile is 25% of the (3n+2)th data point plus 75% of the (3n+3)th data point.
+		/// 
+		/// </summary>
+		static public Quartiles<float> ComputeQuartiles(Span<float> afVal, int length)
+		{
+			int iSize = length;
+			int iMid = iSize / 2; //this is the mid from a zero based index, eg mid of 7 = 3;
+
+			var toReturn = new Quartiles<float>();
+
+			toReturn.count = length;
+			//q0 and q4
+			toReturn.q0 = afVal[0];
+			toReturn.q4 = afVal[length - 1];
+
+			if (iSize % 2 == 0)
+			{
+				//================ EVEN NUMBER OF POINTS: =====================
+				//even between low and high point
+				toReturn.q2 = (afVal[iMid - 1] + afVal[iMid]) / 2;
+
+				int iMidMid = iMid / 2;
+
+				//easy split 
+				if (iMid % 2 == 0)
+				{
+					toReturn.q1 = (afVal[iMidMid - 1] + afVal[iMidMid]) / 2;
+					toReturn.q3 = (afVal[iMid + iMidMid - 1] + afVal[iMid + iMidMid]) / 2;
+				}
+				else
+				{
+					toReturn.q1 = afVal[iMidMid];
+					toReturn.q3 = afVal[iMidMid + iMid];
+				}
+			}
+			else if (iSize == 1)
+			{
+				//================= special case, sorry ================
+				toReturn.q1 = afVal[0];
+				toReturn.q2 = afVal[0];
+				toReturn.q3 = afVal[0];
+			}
+			else
+			{
+				//odd number so the median is just the midpoint in the array.
+				toReturn.q2 = afVal[iMid];
+
+				if ((iSize - 1) % 4 == 0)
+				{
+					//======================(4n-1) POINTS =========================
+					int n = (iSize - 1) / 4;
+					toReturn.q1 = (afVal[n - 1] * .25f) + (afVal[n] * .75f);
+					toReturn.q3 = (afVal[3 * n] * .75f) + (afVal[3 * n + 1] * .25f);
+				}
+				else if ((iSize - 3) % 4 == 0)
+				{
+					//======================(4n-3) POINTS =========================
+					int n = (iSize - 3) / 4;
+
+					toReturn.q1 = (afVal[n] * .75f) + (afVal[n + 1] * .25f);
+					toReturn.q3 = (afVal[3 * n + 1] * .25f) + (afVal[3 * n + 2] * .75f);
+				}
+			}
+
+			return toReturn;
+		}
+
+		/// <summary>
+		/// returns quartiles (0th, 1st, 2nd, 3rd, 4th, 5th.)
+		/// 
+		/// see: https://en.wikipedia.org/wiki/Quantile#Examples
+		/// 
+		/// This generic overload returns discrete values:  the items at those quartile indicies rounded down.  (no averaging of values)
+		/// the float based overload will average results.
+		/// </summary>
+		static public Quartiles<T> ComputeQuartiles<T>(Span<T> afVal, int length)
+		{
+			int iSize = length;
+			int iMid = iSize / 2; //this is the mid from a zero based index, eg mid of 7 = 3;
+
+			var toReturn = new Quartiles<T>();
+
+			toReturn.count = length;
+			//q0 and q4
+			toReturn.q0 = afVal[0];
+			toReturn.q4 = afVal[length - 1];
+
+			toReturn.q2 = afVal[iMid];
+
+			int iMidMid = iMid / 2;
+			toReturn.q1 = afVal[iMidMid];
+			toReturn.q3 = afVal[iMid + iMidMid];
+
+
+
+			return toReturn;
+
+
+		}
+	}
+
+	internal struct PerfInfo<T> : IComparable<PerfInfo<T>> where T : IComparable<T>
+	{
+		public T sample;
+		public TimeSpan wall;
+
+		public int CompareTo(PerfInfo<T> other)
+		{
+			return sample.CompareTo(other.sample);// (int)(sample.c - other.sample.Ticks);
+		}
+
+		public override string ToString()
+		{
+			return $"sample={sample}, wall={wall}";
+		}
+	}
+
+	public abstract class _PerfSampler<T> where T : unmanaged, IComparable<T>
+	{
+
+
+
+		/// <summary>
+		/// tracks wall time, used for getting history over the last N seconds
+		/// </summary>
+		private Stopwatch wallTimer = new Stopwatch();
+		///// <summary>
+		///// tracks time inside a sample
+		///// </summary>
+		//private Stopwatch sampleTimer = new Stopwatch();
+
+
+		/// <summary>
+		/// stores in chrono order (first inserted to last inserted)
+		/// </summary>
+		private PerfInfo<T>[] _tempHist;
+
+		private Queue<PerfInfo<T>> history;
+
+		private int maxHistory;
+
+		public string name;
+		public _PerfSampler(string name, int maxHistory = 1000)
+		{
+			this.name = name;
+			this.maxHistory = maxHistory;
+			this.history = new Queue<PerfInfo<T>>(maxHistory);
+			this._tempHist = new PerfInfo<T>[maxHistory];
+			wallTimer.Start();
+		}
+
+		/// <summary>
+		/// Store a sample for the current wallTime
+		/// </summary>
+		/// <param name="sampleValue"></param>
+		public void Sample(T sampleValue)
+		{
+			//sampleTimer.Stop();
+			//var toReturn = _EndSample();
+
+			//keep our hist under max size
+			while (history.Count >= maxHistory)
+			{
+				history.Dequeue();
+			}
+			history.Enqueue(new PerfInfo<T>() { sample = sampleValue, wall = wallTimer.Elapsed });
+
+			//return toReturn;
+
+		}
+
+
+		public _Stats.Quartiles<T> GetHistory(int samples)
+		{
+			var actualSamples = Math.Min(history.Count, samples);
+			return _GetHistoryHelper(0, actualSamples);
+		}
+
+
+		private _Stats.Quartiles<T> _GetHistoryHelper(int startIndex, int length)
+		{
+			if (length == 0)
+			{
+				return default;
+			}
+			history.CopyTo(_tempHist, 0);
+			Array.Reverse(_tempHist, 0, history.Count);  //only referse length coppied by previous line
+														 //var actualSamples = Math.Min(history.Count, samples);
+			Array.Sort(_tempHist, startIndex, length);
+
+			Span<T> _tempFloats = stackalloc T[length];
+			var endIndex = startIndex + length;
+			var tempIndex = 0;
+			for (var i = startIndex; i < endIndex; i++)
+			{
+				_tempFloats[tempIndex] = _tempHist[i].sample;
+				tempIndex++;
+			}
+
+			var toReturn = _Stats.ComputeQuartiles(_tempFloats, length);
+
+
+			return toReturn;
+
+		}
+
+		public _Stats.Quartiles<T> GetHistory(TimeSpan wallInterval, TimeSpan startingFrom = default)
+		{
+
+
+			history.CopyTo(_tempHist, 0);
+			Array.Reverse(_tempHist, 0, history.Count); //only referse length coppied by previous line
+
+			var now = wallTimer.Elapsed;
+
+			var startIndexTime = now - startingFrom;
+			var endIndexTime = startIndexTime - wallInterval; //working our way backwards through time
+
+
+			//get indexes for stard/end
+			var startIndex = 0;
+			var length = 0;
+			for (var i = 0; i < history.Count; i++)
+			{
+				var current = _tempHist[i];
+				if (current.wall > startIndexTime)
+				{
+					startIndex++;
+					continue;
+				}
+
+				if (current.wall < endIndexTime)
+				{
+					break;
+				}
+				length++;
+			}
+
+			return _GetHistoryHelper(startIndex, length);
+
+		}
+
+		public string GetHistoryString(int samples)
+		{
+			var quart = GetHistory(samples);
+			return _QuartileToString(quart);
+		}
+
+		public string GetHistoryString(TimeSpan wallInterval, TimeSpan startingFrom = default)
+		{
+			var quart = GetHistory(wallInterval, startingFrom);
+			return _QuartileToString(quart);
+		}
+
+		protected virtual string _QuartileToString(_Stats.Quartiles<T> hist)
+		{
+			return $"{name} Quantiles: {hist}";
+		}
+
+
+	}
+
+
+	public class _PerfTimer : _PerfSampler<TimeSpan>
+	{
+
+		/// <summary>
+		/// tracks time inside a sample
+		/// </summary>
+		private Stopwatch sampleTimer = new Stopwatch();
+
+		public _PerfTimer(string name, int maxHistory = 1000) : base(name, maxHistory)
+		{
+		}
+
+		public void BeginSample()
+		{
+			sampleTimer.Restart();
+		}
+
+		public TimeSpan EndSample()
+		{
+			sampleTimer.Stop();
+			var sampleValue = sampleTimer.Elapsed;
+
+			this.Sample(sampleValue);
+			return sampleValue;
+
+		}
+		public void Pause()
+		{
+			sampleTimer.Stop();
+		}
+
+		public void Unpause()
+		{
+			sampleTimer.Start();
+		}
+
+		protected override string _QuartileToString(_Stats.Quartiles<TimeSpan> hist)
+		{
+			return $"{name} Quantiles (ms): {hist.q0.TotalMilliseconds.ToString("F1") } / {hist.q1.TotalMilliseconds.ToString("F1") } / {hist.q2.TotalMilliseconds.ToString("F1") } / {hist.q3.TotalMilliseconds.ToString("F1") } / {hist.q4.TotalMilliseconds.ToString("F1") } ({hist.count} samples)";
+		}
+
+
+	}
+}
