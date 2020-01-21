@@ -22,7 +22,7 @@ public class SubExample : Node
 		while (SUB_enemyBodyEnter.TryDequeue(out var data))
 		{
 			count++;
-			GD.Print($"{count} steve got sub from enemy= {data}");
+			//GD.Print($"{count} steve got sub from enemy= {data}");
 		}
 
 	}

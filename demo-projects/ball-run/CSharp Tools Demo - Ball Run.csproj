@@ -80,5 +80,8 @@
       <Name>ThreadStorm</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="addons\MonoDiagLabel\readme.md" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

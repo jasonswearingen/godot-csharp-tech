@@ -22,5 +22,10 @@ public class SimManager : Node
 	public override void _Process(float delta)
 	{
 		//GC.Collect(GC.MaxGeneration, GCCollectionMode.Optimized, false, false);
+		if (Input.IsActionJustPressed("ui_toggle_fullscreen"))
+		{
+			OS.WindowFullscreen = !OS.WindowFullscreen;
+		}
+    
 	}
 }
