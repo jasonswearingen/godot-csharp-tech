@@ -9,12 +9,6 @@ using System.Runtime.InteropServices;
 
 
 
-
-
-
-
-
-
 /// <summary>
 /// Manages a simulation
 /// </summary>
