@@ -69,6 +69,7 @@ public class MonoDiagLabel : Godot.CanvasLayer
 		//}
 		//add label as child
 		label = new Label();
+		
 
 
 		label.AddColorOverride("font_color", fontColor);
@@ -181,6 +182,8 @@ public class MonoDiagLabel : Godot.CanvasLayer
 		}
 	}
 
+	private Func<TimeSpan, float> _timeToFloat = (val) => (float)val.TotalMilliseconds;
+	private Func<TimeSpan, string> _timeToString = (val) =>val.TotalMilliseconds.ToString("F1");
 
 	private void _setLabelText()
 	{
@@ -189,7 +192,7 @@ public class MonoDiagLabel : Godot.CanvasLayer
 		if (showFrameInfo)
 		{
 			sb.Append($"{fpsPerf.GetHistoryString(this.labelUpdateFrequency)}");
-			sb.Append($"\n{totalFramePerf.GetHistoryString(this.labelUpdateFrequency)}");
+			sb.Append($"\n{totalFramePerf.GetHistoryString(this.labelUpdateFrequency) }");
 			sb.Append($"\n{treeEndHelper.insideTreePerf.GetHistoryString(this.labelUpdateFrequency)}");
 			sb.Append($"\n{treeEndHelper.outsideTreePerf.GetHistoryString(this.labelUpdateFrequency)}");
 			sb.Append($"\n");
@@ -266,6 +269,34 @@ namespace __MonoDiagLabel_internal
 
 	public static class _Stats
 	{
+		//public static float StandardDeviation(Span<float> data)
+		//{
+		//	float stdDev = 0;
+		//	float sumAll = 0;
+		//	float sumAllQ = 0;
+
+		//	//Sum of x and sum of x²
+		//	for (int i = 0; i < data.Length; i++)
+		//	{
+		//		double x = data[i];
+		//		sumAll += x;
+		//		sumAllQ += x * x;
+		//	}
+
+		//	//Mean (not used here)
+		//	//double mean = 0;
+		//	//mean = sumAll / (double)data.Length;
+
+		//	//Standard deviation
+		//	stdDev = System.Math.Sqrt(
+		//		(sumAllQ -
+		//		(sumAll * sumAll) / data.Length) *
+		//		(1.0d / (data.Length - 1))
+		//		);
+
+		//	return stdDev;
+		//}
+
 		public struct Quartiles<T>
 		{
 			public T q0;
@@ -280,6 +311,45 @@ namespace __MonoDiagLabel_internal
 			{
 				return $"{q0} / {q1} / {q2}  / {q3} / {q4} ({count} samples)";
 			}
+
+			/// <summary>
+			/// colors output string (using BBCode) if any number is 2 stddevs higher/lower than mean.
+			/// </summary>
+			/// <param name="toFloat"></param>
+			/// <returns></returns>
+			private string ToColorString(Func<T,float> toFloat,Func<T,string>toString)
+			{
+				//UNUSED PLACEHOLDER:  I can't get richtextlabel working, but if I can, we can code colors when values are outside stddev.
+
+				Span<float> qf = stackalloc float[5];
+				qf[0] = toFloat(q0);
+				qf[1] = toFloat(q1);
+				qf[2] = toFloat(q2);
+				qf[3] = toFloat(q3);
+				qf[4] = toFloat(q4);
+
+				//stddev calc from https://stackoverflow.com/questions/895929/how-do-i-determine-the-standard-deviation-stddev-of-a-set-of-values
+				var avg = qf[2];
+				var sum = ((qf[1] * count * 0.5) + (qf[3] * count * 0.5) + (qf[2] * count)) / 2;
+				var sumQ = ((qf[1] * qf[1] * count * 0.5) + (qf[3] * qf[3] * count * 0.5) + (qf[2]*qf[2] * count)) / 2;
+				var stdDev = Math.Sqrt((sumQ - (sum * sum) / count) * (1f / (count - 1)));
+
+				var stdDev1Below = avg - stdDev;
+				var stdDev1Above = avg + stdDev;
+
+				var qs = new string[5];
+				qs[0] = toString(q0);
+				qs[1] = toString(q1);
+				qs[2] = toString(q2);
+				qs[3] = toString(q3);
+				qs[4] = toString(q4);
+
+
+				return $"{(qf[0]<stdDev1Below?$"[color=blue]{qs[0]}[/color]": qs[0])} / {q1} / {q2}  / {q3} / {q4} ({count} samples)";
+
+
+			}
+
 		}
 
 		/// <summary>
@@ -433,10 +503,6 @@ namespace __MonoDiagLabel_internal
 		/// tracks wall time, used for getting history over the last N seconds
 		/// </summary>
 		private Stopwatch wallTimer = new Stopwatch();
-		///// <summary>
-		///// tracks time inside a sample
-		///// </summary>
-		//private Stopwatch sampleTimer = new Stopwatch();
 
 
 		/// <summary>
@@ -464,18 +530,12 @@ namespace __MonoDiagLabel_internal
 		/// <param name="sampleValue"></param>
 		public void Sample(T sampleValue)
 		{
-			//sampleTimer.Stop();
-			//var toReturn = _EndSample();
-
 			//keep our hist under max size
 			while (history.Count >= maxHistory)
 			{
 				history.Dequeue();
 			}
 			history.Enqueue(new PerfInfo<T>() { sample = sampleValue, wall = wallTimer.Elapsed });
-
-			//return toReturn;
-
 		}
 
 
@@ -560,6 +620,7 @@ namespace __MonoDiagLabel_internal
 			var quart = GetHistory(wallInterval, startingFrom);
 			return _QuartileToString(quart);
 		}
+
 
 		protected virtual string _QuartileToString(_Stats.Quartiles<T> hist)
 		{
