@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ThreadStorm\ThreadStorm.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="GodotSharp">
       <HintPath>..\..\..\demo-projects\ball-run\.mono\assemblies\Debug\GodotSharp.dll</HintPath>
     </Reference>

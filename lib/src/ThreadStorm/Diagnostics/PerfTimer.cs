@@ -6,7 +6,7 @@ using System.Text;
 namespace ThreadStorm.Diagnostics
 {
 
-	public class _PerfTimer : _PerfSampler<TimeSpan>
+	public class PerfTimer : PerfSampler<TimeSpan>
 	{
 
 		/// <summary>
@@ -14,7 +14,7 @@ namespace ThreadStorm.Diagnostics
 		/// </summary>
 		private Stopwatch sampleTimer = new Stopwatch();
 
-		public _PerfTimer(string name, int maxHistory = 1000) : base(name, maxHistory)
+		public PerfTimer(string name, int maxHistory = 1000) : base(name, maxHistory)
 		{
 		}
 

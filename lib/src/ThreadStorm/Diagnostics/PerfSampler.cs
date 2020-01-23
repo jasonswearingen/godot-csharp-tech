@@ -12,7 +12,7 @@ namespace ThreadStorm.Diagnostics
 	/// reports results as quartiles: 0th, 1st,2nd, 3rd, 4th.   see https://en.wikipedia.org/wiki/Quantile for more information.
 	/// </summary>
 	/// <typeparam name="T"></typeparam>
-	public class _PerfSampler<T> where T : unmanaged, IComparable<T>
+	public class PerfSampler<T> where T : unmanaged, IComparable<T>
 	{
 
 
@@ -33,7 +33,7 @@ namespace ThreadStorm.Diagnostics
 		private int maxHistory;
 
 		public string name;
-		public _PerfSampler(string name, int maxHistory = 1000)
+		public PerfSampler(string name, int maxHistory = 1000)
 		{
 			this.name = name;
 			this.maxHistory = maxHistory;
