@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp Tools Demo - Ball Ru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "godot-csharp-tech", "lib\src\godot-csharp-tech\godot-csharp-tech.csproj", "{7795580E-92CB-4597-BC8E-51164F712830}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "scratch", "demo-projects\scratch\scratch.csproj", "{19E7FD9A-70C5-4040-8C57-51A845CD0FB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +44,12 @@ Global
 		{7795580E-92CB-4597-BC8E-51164F712830}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7795580E-92CB-4597-BC8E-51164F712830}.Tools|Any CPU.ActiveCfg = Debug|Any CPU
 		{7795580E-92CB-4597-BC8E-51164F712830}.Tools|Any CPU.Build.0 = Debug|Any CPU
+		{19E7FD9A-70C5-4040-8C57-51A845CD0FB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19E7FD9A-70C5-4040-8C57-51A845CD0FB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19E7FD9A-70C5-4040-8C57-51A845CD0FB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19E7FD9A-70C5-4040-8C57-51A845CD0FB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19E7FD9A-70C5-4040-8C57-51A845CD0FB3}.Tools|Any CPU.ActiveCfg = Tools|Any CPU
+		{19E7FD9A-70C5-4040-8C57-51A845CD0FB3}.Tools|Any CPU.Build.0 = Tools|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

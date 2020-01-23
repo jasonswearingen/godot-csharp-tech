@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://addons/MonoDiagLabel/MonoDiagLabel.cs" type="Script" id=1]
+[ext_resource path="res://screens/SimRoot.cs" type="Script" id=2]
+
+[node name="SimRoot" type="Spatial"]
+script = ExtResource( 2 )
+
+[node name="MonoDiagLabel" type="CanvasLayer" parent="."]
+script = ExtResource( 1 )

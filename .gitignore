@@ -5,3 +5,6 @@ lib/src/TestConsoleApp/bin/
 lib/bin/
 lib/src/godot-csharp-tech/obj/
 lib/src/ThreadStorm/bin/
+demo-projects/scratch/.mono/
+demo-projects/scratch/.import/
+packages/
