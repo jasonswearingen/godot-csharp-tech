@@ -20,7 +20,7 @@ config/icon="res://icon.png"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "MonoDiagLabel", "mono_debugger" )
+enabled=PoolStringArray( "godot-csharp-tech", "mono_debugger" )
 
 [rendering]
 
