@@ -2,7 +2,6 @@
 The end goal is a high performance multithreaded game framework + logic "engine" that uses [Godot](https://godotengine.org/) for presentation.
 
 
-
 # ToC
 - [WORK IN PROGRESS](#work-in-progress)
 - [ToC](#toc)
@@ -23,6 +22,8 @@ The end goal is a high performance multithreaded game framework + logic "engine"
 
 # Current status
 **A dumpster fire**.  Feel free to critique, but avoid using "for real" until architecture and  design patterns are further established.
+
+Main branch is semi-stable.  Dev branch might not build.
 
 ## Done
 - ```PubSub``` system:  [./lib/src/Threadstorm/Messaging](./lib/src/Threadstorm/Messaging) 
