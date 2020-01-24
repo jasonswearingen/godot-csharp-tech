@@ -12,7 +12,7 @@ public class InputController : Spatial
     private Vector3 _up = Vector3.Up;
 
 
-    public Vector3 lookInput;
+    public Vector2 lookInput;
     /// <summary>
     /// this is actually the "backwards" vector of the matrix.  kinda dumb.
     /// </summary>
@@ -72,12 +72,12 @@ public class InputController : Spatial
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(float delta)
     {
-        if (lookInput != Vector3.Zero)
+        if (lookInput != Vector2.Zero)
         {
             var xform = Transform;
             var localRight = Transform.basis.Column0;
             var localUp = Transform.basis.Column1;
-            var localFwd = Transform.basis.Column2;
+            var localFwd = Transform.basis.Column2; //alt approach:  localFwd = this.Transform.Xform(Vector3.Forward) - Transform.origin;
             var localPos = Transform.origin;
 
             var localIsNormalized = false;
@@ -86,18 +86,26 @@ public class InputController : Spatial
                 localIsNormalized = true;
             }
 
+
+
+            targetLookingAt = localFwd *-1;
+
             //targetForward = targetForward * -1;
 
 
-            //move horizontal (left-right) == lookInput.X
+            //look horizontal (left-right) == lookInput.X
             var targetHoriz = targetLookingAt.Cross(targetUp);
             var adjustHoriz = targetHoriz * (lookInput.x * delta * lookSensitivity);
+
+            //look vertical (up-down) == lookInput.Y
+            var targetVert = targetLookingAt.Cross(localRight);
+            var adjustVert = targetVert * (lookInput.y * delta * lookSensitivity);
 
 
 
             //GD.Print("targetForward", targetForward, "targetHoriz", targetHoriz,"adjustHoriz", adjustHoriz);
 
-            var newTarget = targetLookingAt + adjustHoriz;
+            var newTarget = targetLookingAt + adjustHoriz + adjustVert;
             newTarget = newTarget.Normalized();
             targetLookingAt = newTarget;
 
@@ -216,31 +224,33 @@ public class InputController : Spatial
         base._UnhandledInput(input);
 
         //! use a shorter/simpler way to control character than shown in video
-        lookInput = new Vector3()
+        lookInput = new Vector2()
         {
             x = Input.GetActionStrength("ui_left") - Input.GetActionStrength("ui_right"),
             //z = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
             y = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
         };
+        lookInput *= -1; // have to flip because our "look at" vector is actually behind, not in front.  dumb but ok
+
         //don't let movement exceed "1" length (but allow less)
         if (lookInput.LengthSquared() > 1f)
         {
             lookInput = lookInput.Normalized();
         }
 
-        if (input.IsActionPressed("ui_down"))
-        {
-            GD.Print("resetting xform");
-            Transform = originalXform;
-            lookInput = Vector3.Zero;
-        }
+        //if (input.IsActionPressed("ui_down"))
+        //{
+        //    GD.Print("resetting xform");
+        //    Transform = originalXform;
+        //    lookInput = Vector3.Zero;
+        //}
 
-        if (input.IsActionPressed("ui_up"))
-        {
-            GD.Print("resetting xform");
-            Transform = Godot.Transform.Identity;
-            lookInput = Vector3.Zero;
-        }
+        //if (input.IsActionPressed("ui_up"))
+        //{
+        //    GD.Print("resetting xform");
+        //    Transform = Godot.Transform.Identity;
+        //    lookInput = Vector3.Zero;
+        //}
 
 
 
