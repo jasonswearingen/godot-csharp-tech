@@ -2,8 +2,83 @@ using Godot;
 using System;
 
 
-internal class _MouseInputHandler : Node
+public class _MouseInputHandler : Node
 {
+
+	[Export]
+	public Vector2 lookSensitivityMouse = Vector2.One;
+
+	/// <summary>
+	/// after reading this, you should set it to zero  (not automatically reset when input stops)
+	/// </summary>
+	public Vector2 lastMouseMovement;
+
+	public override void _Ready()
+	{
+	}
+
+	public override void _Process(float delta)
+	{
+
+
+	}
+	public override void _UnhandledInput(InputEvent input)
+	{
+		base._UnhandledInput(input);
+
+
+		//handle mouse input
+		if (input is InputEventMouseMotion)
+		{
+			var mouse = input as InputEventMouseMotion;
+			var relMove = mouse.Relative;
+			//GD.Print($"relMove={relMove.ToString("F2")}");
+			relMove *= lookSensitivityMouse;
+			lastMouseMovement = -mouse.Relative;
+		}
+	}
+
+}
+
+public class _KeyboardInputHandler : Node
+{
+
+	/// <summary>
+	/// current state of inputs to "game_look_x" and "game_look_y"  inputs
+	/// </summary>
+	public Vector2 lookState;
+
+	public override void _Ready()
+	{
+	}
+
+	public override void _Process(float delta)
+	{
+
+
+	}
+
+	public override void _UnhandledInput(InputEvent input)
+	{
+		base._UnhandledInput(input);
+
+		//! use a shorter/simpler way to control character than shown in video
+		lookState = new Vector2()
+		{
+			x = Input.GetActionStrength("ui_left") - Input.GetActionStrength("ui_right"),
+			y = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
+		};
+
+
+		////don't let movement exceed "1" length (but allow less)
+		//if (lookInputKeyboard.LengthSquared() > 1f)
+		//{
+		//	lookInputKeyboard = lookInputKeyboard.Normalized();
+		//}
+
+	}
+
+
 
 }
 
@@ -17,8 +92,6 @@ internal class _MouseInputHandler : Node
 // the following code is a more complex solution allowing looking "past" the up vector
 public class InputController : Spatial
 {
-	[Export]
-	public Vector2 lookSensitivityMouse = Vector2.One;
 
 	/// <summary>
 	/// set to true to use a tradtional gimbal camera.  no roll, but restricts camera from looking past straight up/down
@@ -32,10 +105,16 @@ public class InputController : Spatial
 
 	private Vector3 _up = Vector3.Up;
 
+	private _MouseInputHandler mouseInput;
+	private _KeyboardInputHandler keyboardInput;
 
-	public Vector2 lookInputKeyboard;
+
 	public override void _Ready()
 	{
+		mouseInput = new _MouseInputHandler();
+		AddChild(mouseInput);
+		keyboardInput = new _KeyboardInputHandler();
+		AddChild(keyboardInput);
 	}
 
 	[Export]
@@ -110,9 +189,9 @@ public class InputController : Spatial
 		var localLookDir = localFwd * -1;
 
 
-		var lookInput = lookInputKeyboard + lookInputMouse;
+		var lookInput = keyboardInput.lookState + mouseInput.lastMouseMovement;
 		lookInput *= -1; // have to flip because our "look at" vector is actually behind, not in front.  dumb but ok
-		lookInputMouse = Vector2.Zero;  //clear out mouse when done reading it, as it doesn't auto-clear like keyboard input.
+		mouseInput.lastMouseMovement = Vector2.Zero;  //clear out mouse when done reading it, as it doesn't auto-clear like keyboard input.
 
 
 
@@ -145,11 +224,11 @@ public class InputController : Spatial
 					   
 			//look horizontal (left-right) == lookInput.X
 			var targetHoriz = localLookDir.Cross(localUp);
-			var adjustHoriz = targetHoriz * (lookInput.x * delta * lookSensitivityMouse.x);
+			var adjustHoriz = targetHoriz * (lookInput.x * delta);
 
 			//look vertical (up-down) == lookInput.Y
 			var targetVert = localLookDir.Cross(localRight);
-			var adjustVert = targetVert * (lookInput.y * delta * lookSensitivityMouse.y);
+			var adjustVert = targetVert * (lookInput.y * delta);
 
 
 					   
@@ -314,50 +393,6 @@ public class InputController : Spatial
 		//}
 
 
-	}
-
-	public Vector2 lookInputMouse;
-	public override void _UnhandledInput(InputEvent input)
-	{
-		base._UnhandledInput(input);
-
-		//! use a shorter/simpler way to control character than shown in video
-		lookInputKeyboard = new Vector2()
-		{
-			x = Input.GetActionStrength("ui_left") - Input.GetActionStrength("ui_right"),
-			//z = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
-			y = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
-		};
-
-		//handle mouse input
-		if (input is InputEventMouseMotion)
-		{
-			var mouse = input as InputEventMouseMotion;
-			var relMove = mouse.Relative;
-			GD.Print($"relMove={relMove.ToString("F2")}");
-			lookInputMouse = -mouse.Relative;
-		}
-
-
-		//don't let movement exceed "1" length (but allow less)
-		if (lookInputKeyboard.LengthSquared() > 1f)
-		{
-			lookInputKeyboard = lookInputKeyboard.Normalized();
-		}
-
-		//if (input.IsActionPressed("ui_down"))
-		//{
-		//    GD.Print("resetting xform");
-		//    Transform = originalXform;
-		//    lookInput = Vector3.Zero;
-		//}
-
-		//if (input.IsActionPressed("ui_up"))
-		//{
-		//    GD.Print("resetting xform");
-		//    Transform = Godot.Transform.Identity;
-		//    lookInput = Vector3.Zero;
-		//}
 	}
 
 
