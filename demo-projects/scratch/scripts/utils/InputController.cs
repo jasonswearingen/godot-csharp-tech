@@ -11,6 +11,9 @@ public class _MouseInputHandler : Node
 	[Export]
 	public Vector2 lookSensitivityMouse = Vector2.One;
 
+	[Export]
+	public bool captureMouse = true;
+
 	/// <summary>
 	/// after reading this, you should set it to zero  (not automatically reset when input stops)
 	/// 
@@ -22,7 +25,10 @@ public class _MouseInputHandler : Node
 
 	public override void _Ready()
 	{
-		GD.Print("forward", Vector3.Forward.ToString("F2"));
+		if (captureMouse)
+		{
+			Input.SetMouseMode(Input.MouseMode.Captured);
+		}
 	}
 
 	public override void _Process(float delta)
@@ -34,6 +40,17 @@ public class _MouseInputHandler : Node
 	{
 		base._UnhandledInput(input);
 
+		if (input.IsActionPressed("global_mouse_capture"))
+		{
+			if (Input.GetMouseMode() == Input.MouseMode.Captured)
+			{
+				Input.SetMouseMode(Input.MouseMode.Visible);
+			}
+			else
+			{
+				Input.SetMouseMode(Input.MouseMode.Captured);
+			}
+		}
 
 		//handle mouse input
 		if (input is InputEventMouseMotion)
@@ -180,9 +197,9 @@ public class InputController : Spatial
 		//////var newUp = (_worldUp + localUp) / 2;
 
 
-		
+
 		//////var lenDiff = upDiff.Length();
-		
+
 		////////var appliedAngle = Mathf.Clamp(10 * angle * delta, 0,2* Mathf.Pi *delta);
 		//////var appliedAngle = Mathf.Clamp(angle * rollStabilizeSpeedFactor, 0, rollMaxStabilizePerSecond) * delta;
 		//////newUp = localUp.Rotated(cross, appliedAngle);
@@ -246,7 +263,7 @@ public class InputController : Spatial
 		{
 			if (freecamRemoveRoll == true)
 			{
-				var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp,ref _worldUp);
+				var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp);
 				Transform = Transform.LookingAt(localLookDir + xform.origin, newUp);
 			}
 		}
