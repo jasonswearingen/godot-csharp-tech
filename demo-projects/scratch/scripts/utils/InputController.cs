@@ -2,7 +2,6 @@ using Godot;
 using System;
 
 //todo:  rollfix needs to be applied after applying inputs (not just start of update loop)
-//investigate vector flipping (ln 196)
 //fix freecam (roll adjust when moving back to center
 //only do roll fix if in freecam mode.
 
@@ -111,13 +110,13 @@ public class InputController : Spatial
 	/// set to true to use a tradtional gimbal camera.  no roll, but restricts camera from looking past straight up/down
 	/// </summary>
 	[Export]
-	public bool useGimbalCamera = true;
+	public bool useGimbalCamera = false;
 	/// <summary>
 	/// if useGimbalCamera==true, how many degrees to restrict camera view angles when looking up or down.  useful to prevent artifacts (camera flipping direction)
 	/// </summary>
 	public float gimcamDeadzoneDeg = 1.0f;
 
-	private Vector3 _up = Vector3.Up;
+	private Vector3 _worldUp = Vector3.Up;
 
 	private _MouseInputHandler mouseInput;
 	private _KeyboardInputHandler keyboardInput;
@@ -147,15 +146,15 @@ public class InputController : Spatial
 			return localUp;
 		}
 
-		var upDiff = _up - localUp;
+		var upDiff = _worldUp - localUp;
 		//var upDiffLen = upDiff.Length() / 2;// Mathf.Clamp(upDiff.Length(), 0, 1);
 		//var newUp = _up.LinearInterpolate(localUp, upDiffLen);
-		var newUp = (_up + localUp) / 2;
+		var newUp = (_worldUp + localUp) / 2;
 
 
-		var angle = _up.AngleTo(localUp);
+		var angle = _worldUp.AngleTo(localUp);
 		var lenDiff = upDiff.Length();
-		var cross = localUp.Cross(_up);
+		var cross = localUp.Cross(_worldUp);
 		//var appliedAngle = Mathf.Clamp(10 * angle * delta, 0,2* Mathf.Pi *delta);
 		var appliedAngle = Mathf.Clamp(angle * rollStabilizeSpeedFactor, 0, rollMaxStabilizePerSecond) * delta;
 		newUp = localUp.Rotated(cross, appliedAngle);
@@ -185,7 +184,7 @@ public class InputController : Spatial
 		var localRight = Transform.basis.Column0;
 		var localUp = Transform.basis.Column1;
 
-		var selectedUp = useGimbalCamera ? _up : localUp;
+		var selectedUp = useGimbalCamera ? _worldUp : localUp;
 
 		var localFwd = Transform.basis.Column2; //alt approach:  localFwd = this.Transform.Xform(Vector3.Forward) - Transform.origin;
 		var localPos = Transform.origin;
@@ -214,15 +213,14 @@ public class InputController : Spatial
 
 
 
-		if (freecamRemoveRoll == true)
-		{
-			var newUp = _freeCamRemoveRollHelper(delta, ref localUp);
-			Transform = Transform.LookingAt(localLookDir + xform.origin, newUp);
-		}
-
 
 		if (lookInput == Vector2.Zero)
 		{
+			if (freecamRemoveRoll == true)
+			{
+				var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp);
+				Transform = Transform.LookingAt(localLookDir + xform.origin, newUp);
+			}
 		}
 		else
 		{
@@ -289,6 +287,11 @@ public class InputController : Spatial
 			}
 
 			var targetLookPosition = targetLookDir + xform.origin;
+
+			if (freecamRemoveRoll == true)
+			{
+				selectedUp = _freeCamRemoveRollHelper(delta, ref selectedUp);
+			}
 			Transform = Transform.LookingAt(targetLookPosition, selectedUp);
 
 
