@@ -1,116 +1,19 @@
+/////////////////////////////////////////
+///Input Controller, allows for keyboard and mouse inputs
+///example use:  attach a camera as a child node
+///There are two camera types.   traditional "gimbal" camera (done), and a freeCam (experimental) that can look past vertical, and still corrects for roll.
+///this is still a work in progress.
+
+
+
+
+
+
+
+
 using Godot;
 using System;
 
-//todo:  rollfix needs to be applied after applying inputs (not just start of update loop)
-//fix freecam (roll adjust when moving back to center
-//only do roll fix if in freecam mode.
-
-public class _MouseInputHandler : Node
-{
-
-	[Export]
-	public Vector2 lookSensitivityMouse = Vector2.One;
-
-	[Export]
-	public bool captureMouse = true;
-
-	/// <summary>
-	/// after reading this, you should set it to zero  (not automatically reset when input stops)
-	/// 
-	/// relative to Vector3.forward  (0,0,-1)
-	/// right = +x
-	/// up = +y
-	/// </summary>
-	public Vector2 lastMouseMovement;
-
-	public override void _Ready()
-	{
-		if (captureMouse)
-		{
-			Input.SetMouseMode(Input.MouseMode.Captured);
-		}
-	}
-
-	public override void _Process(float delta)
-	{
-
-
-	}
-	public override void _UnhandledInput(InputEvent input)
-	{
-		base._UnhandledInput(input);
-
-		if (input.IsActionPressed("global_mouse_capture"))
-		{
-			if (Input.GetMouseMode() == Input.MouseMode.Captured)
-			{
-				Input.SetMouseMode(Input.MouseMode.Visible);
-			}
-			else
-			{
-				Input.SetMouseMode(Input.MouseMode.Captured);
-			}
-		}
-
-		//handle mouse input
-		if (input is InputEventMouseMotion)
-		{
-			var mouse = input as InputEventMouseMotion;
-			var relMove = mouse.Relative;
-			GD.Print($"relMove={relMove.ToString("F2")}");
-			relMove.y *= -1;  //mouse flips up/down
-			relMove *= lookSensitivityMouse;
-			lastMouseMovement = relMove;
-			//lastMouseMovement = mouse.Relative * lookSensitivityMouse;
-			//lastMouseMovement = -mouse.Relative;
-		}
-	}
-
-}
-
-public class _KeyboardInputHandler : Node
-{
-
-	/// <summary>
-	/// current state of inputs to "game_look_x" and "game_look_y"  inputs
-	/// right = +x
-	/// up = +y
-	/// </summary>
-	public Vector2 lookState;
-
-	public override void _Ready()
-	{
-	}
-
-	public override void _Process(float delta)
-	{
-
-
-	}
-
-	public override void _UnhandledInput(InputEvent input)
-	{
-		base._UnhandledInput(input);
-
-		//! use a shorter/simpler way to control character than shown in video
-		lookState = new Vector2()
-		{
-			x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left"),
-			y = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
-		};
-
-
-		////don't let movement exceed "1" length (but allow less)
-		//if (lookInputKeyboard.LengthSquared() > 1f)
-		//{
-		//	lookInputKeyboard = lookInputKeyboard.Normalized();
-		//}
-
-	}
-
-
-
-}
 
 
 //this simple code works if you need a basic camera
@@ -156,18 +59,46 @@ public class InputController : Spatial
 	//public float rollSnapAngle = 0.1f;
 
 
+	[Export]
 	float freecamRollFixDegPerSec = 360;
+
+	[Export]
 	float freecamRollFixAcceleration = 2;
 
-	private Vector3 _freeCamRemoveRollHelper(float delta, ref Vector3 localUp, ref Vector3 targetUp)
+	[Export]
+	float freecamPoleFreeZoneDeg = 30f;
+
+	private Vector3 _freeCamRemoveRollHelper(float delta, ref Vector3 localUp, ref Vector3 targetUp, ref Vector3 lookDir)
 	{
 		if (freecamRemoveRoll != true)
 		{
 			return localUp;
 		}
 
+		
+		
+
+
 		var cross = localUp.Cross(targetUp);
 		var angle = localUp.AngleTo(targetUp);
+
+
+
+		var lookAngleToTargetUp = lookDir.AngleTo(targetUp);
+
+		var freeZoneUp = Mathf.Deg2Rad(freecamPoleFreeZoneDeg);
+		var freeZoneDown = Mathf.Deg2Rad(180-freecamPoleFreeZoneDeg);
+
+		if (lookDir.z > 0)
+		{
+			//looking backwards
+			if (lookAngleToTargetUp < freeZoneUp || lookAngleToTargetUp > freeZoneDown)
+			{
+				return localUp;
+			}
+		}
+
+
 
 
 		var angleToFix = (Mathf.Deg2Rad(freecamRollFixDegPerSec) + (angle * freecamRollFixAcceleration)) * delta;
@@ -183,43 +114,6 @@ public class InputController : Spatial
 		return toReturn;
 
 
-
-
-
-
-
-
-
-
-		//////var upDiff = _worldUp - localUp;
-		////////var upDiffLen = upDiff.Length() / 2;// Mathf.Clamp(upDiff.Length(), 0, 1);
-		////////var newUp = _up.LinearInterpolate(localUp, upDiffLen);
-		//////var newUp = (_worldUp + localUp) / 2;
-
-
-
-		//////var lenDiff = upDiff.Length();
-
-		////////var appliedAngle = Mathf.Clamp(10 * angle * delta, 0,2* Mathf.Pi *delta);
-		//////var appliedAngle = Mathf.Clamp(angle * rollStabilizeSpeedFactor, 0, rollMaxStabilizePerSecond) * delta;
-		//////newUp = localUp.Rotated(cross, appliedAngle);
-
-		////////if (angle < rollSnapAngle)
-		////////{
-		////////	newUp = _up;
-		////////}
-
-		////////newUp = localUp;
-
-
-		////////	GD.Print(" localUp =", localUp.ToString("F2")
-		////////, " angle=", angle.ToString("F2")
-		////////, " appliedAngle=", appliedAngle.ToString("F2")
-		////////, " upDiff=", upDiff.ToString("F2")
-		////////, " lenDiff=", lenDiff.ToString("F2")
-		////////, " newUp=", newUp.ToString("F2"));
-
-		//////return newUp;
 
 	}
 	public override void _Process(float delta)
@@ -263,7 +157,7 @@ public class InputController : Spatial
 		{
 			if (freecamRemoveRoll == true)
 			{
-				var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp);
+				var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp, ref localLookDir);
 				Transform = Transform.LookingAt(localLookDir + xform.origin, newUp);
 			}
 		}
@@ -335,7 +229,7 @@ public class InputController : Spatial
 
 			if (freecamRemoveRoll == true)
 			{
-				selectedUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp);
+				selectedUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp,ref targetLookDir);
 			}
 			Transform = Transform.LookingAt(targetLookPosition, selectedUp);
 
@@ -343,106 +237,114 @@ public class InputController : Spatial
 
 
 
+		}
 
 
-			//xform.origin = Transform.origin;
-			//Transform = xform;
+	}
+
+	public class _MouseInputHandler : Node
+	{
+
+		[Export]
+		public Vector2 lookSensitivityMouse = Vector2.One;
+
+		[Export]
+		public bool captureMouse = true;
+
+		/// <summary>
+		/// after reading this, you should set it to zero  (not automatically reset when input stops)
+		/// 
+		/// relative to Vector3.forward  (0,0,-1)
+		/// right = +x
+		/// up = +y
+		/// </summary>
+		public Vector2 lastMouseMovement;
+
+		public override void _Ready()
+		{
+			if (captureMouse)
+			{
+				Input.SetMouseMode(Input.MouseMode.Captured);
+			}
+		}
+
+		public override void _Process(float delta)
+		{
 
 
-			//var quat = new Quat(targetUp, Vector3.Forward.AngleTo(newForward));
-			//var basis = new Basis()
+		}
+		public override void _UnhandledInput(InputEvent input)
+		{
+			base._UnhandledInput(input);
 
-			//Transform = new Transform(targetHoriz, targetUp, targetHoriz, Transform.origin);
-			//Transform = new Transform(quat, Transform.origin);
+			if (input.IsActionPressed("global_mouse_capture"))
+			{
+				if (Input.GetMouseMode() == Input.MouseMode.Captured)
+				{
+					Input.SetMouseMode(Input.MouseMode.Visible);
+				}
+				else
+				{
+					Input.SetMouseMode(Input.MouseMode.Captured);
+				}
+			}
 
-			//var xf = Godot.Transform.Identity.LookingAt(targetForward,targetUp);
-			//var xfDirection = xf.Xform(Vector3.Forward);
-			//xf.origin = Transform.origin;
+			//handle mouse input
+			if (input is InputEventMouseMotion)
+			{
+				var mouse = input as InputEventMouseMotion;
+				var relMove = mouse.Relative;
+				GD.Print($"relMove={relMove.ToString("F2")}");
+				relMove.y *= -1;  //mouse flips up/down
+				relMove *= lookSensitivityMouse;
+				lastMouseMovement = relMove;
+				//lastMouseMovement = mouse.Relative * lookSensitivityMouse;
+				//lastMouseMovement = -mouse.Relative;
+			}
+		}
 
-			//Transform = xf;
+	}
 
-			//GD.Print("targetForward", targetLookingAt, "origin", Transform.origin, "xformTarget", xformTarget);
+	public class _KeyboardInputHandler : Node
+	{
 
+		/// <summary>
+		/// current state of inputs to "game_look_x" and "game_look_y"  inputs
+		/// right = +x
+		/// up = +y
+		/// </summary>
+		public Vector2 lookState;
 
+		public override void _Ready()
+		{
+		}
 
-
-
-
-
-			//Transform.SetLookAt(Transform.origin, newForward, targetUp);
-
-
-			//this.Transform = this.Transform.Rotated(targetForward.Cross(newForward), 1);
-
-			//this.Transform = this.Transform.LookingAt(newForward, targetUp);
-
-
-			//var xform = Transform.LookingAt(newForward, targetUp);
-
-			//var right = xform.basis.Column0;
-			//var up = xform.basis.Column1;
-			//var fwd = xform.basis.Column2;
-			//var pos = xform.origin;
-
-			//GD.Print("fwd", fwd, "up", up, "pos", pos, "fwdX", this.Transform.Xform(Vector3.Forward));
-
-
-
-			//this.Transform = xform;
-			//targetLookingAt = newForward;
-
-
-
-
-
-			//targetForward += lookInput * delta * lookSensitivity;
-			//targetForward = targetForward.Normalized();
-
-			//var right = targetForward.Cross(targetUp);
-
-			//targetForward.Project
-			////new up
-
-
-			//var xform = Transform.LookingAt(targetForward, targetUp);
-			//this.Transform = xform;
-
-
-
-			//this.Rotate(targ, Mathf.Deg2Rad(lookInput.x) * delta * lookSensitivity);
-			//this.Rotate(right, Mathf.Deg2Rad(lookInput.z) * delta * lookSensitivity);
+		public override void _Process(float delta)
+		{
 
 
 		}
 
-		//return;
-		//if (lookInput != Vector3.Zero)        
-		//{   
+		public override void _UnhandledInput(InputEvent input)
+		{
+			base._UnhandledInput(input);
 
-		//    var xform = this.Transform;
-
-		//    var right = xform.basis.Column0;
-		//    var up = xform.basis.Column1;
-		//    //up = _up;
-		//    var fwd = xform.basis.Column2;
-
-		//    //side-by-side:
-		//    //this.GlobalRotate(up, Mathf.Deg2Rad(lookInput.x) * delta * lookSensitivity);
-		//    this.Rotate(up, Mathf.Deg2Rad(lookInput.x) * delta * lookSensitivity);
-		//    this.Rotate(right, Mathf.Deg2Rad(lookInput.z) * delta * lookSensitivity);
+			//! use a shorter/simpler way to control character than shown in video
+			lookState = new Vector2()
+			{
+				x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left"),
+				y = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
+			};
 
 
+			////don't let movement exceed "1" length (but allow less)
+			//if (lookInputKeyboard.LengthSquared() > 1f)
+			//{
+			//	lookInputKeyboard = lookInputKeyboard.Normalized();
+			//}
 
-		//    //need to reset up
-		//    //var localX = xform.Rotated(right, Mathf.Deg2Rad(lookInput.z) * delta * lookSensitivity);
-		//    var localX = this.Transform;
-		//    //localX.LookingAt
-		//    //localX.basis.Column1 = up;  //doesn't work: corrupts xform
-		//    //.
+		}
 
-		//    this.Transform = localX;
-		//    //this.Transform  basis.Column1 = up;
-		//}
 
 
 	}
