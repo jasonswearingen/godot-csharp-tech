@@ -3,6 +3,17 @@
 ///example use:  attach a camera as a child node
 ///There are two camera types.   traditional "gimbal" camera (done), and a freeCam (experimental) that can look past vertical, and still corrects for roll.
 ///this is still a work in progress.
+///
+///
+///references for researching later:
+///https://github.com/Sombresonge/Third-Person-Controller/blob/master/ThirdPersonController/Controller.gd
+///https://github.com/tavurth/godot-simple-fps-camera/blob/master/Camera.gd
+///https://gamedev.stackexchange.com/questions/136174/im-rotating-an-object-on-two-axes-so-why-does-it-keep-twisting-around-the-thir
+///https://github.com/mrdev023/Godot-Orbit-Camera/blob/master/addons/orbit_camera/orbit_camera.gd
+///https://github.com/Goutte/godot-trackball-camera/blob/master/addons/goutte.camera.trackball/trackball_camera.gd
+///https://github.com/TWew/CADLikeOrbit_Camera/blob/master/CADLikeOrbit_Camera.gd
+///
+
 
 
 
@@ -335,7 +346,6 @@ public class InputController : Spatial
 				x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left"),
 				y = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
 			};
-
 
 			////don't let movement exceed "1" length (but allow less)
 			//if (lookInputKeyboard.LengthSquared() > 1f)
