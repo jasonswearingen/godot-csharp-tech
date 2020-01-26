@@ -134,47 +134,75 @@ public class InputController : Spatial
 	public bool freecamRemoveRoll = true;
 
 
-	public float rollMaxStabilizePerSecond = Mathf.Pi * 2 * 2;
-	public float rollStabilizeSpeedFactor = 10f;
-	public float rollSnapAngle = 0.1f;
+	//public float rollMaxStabilizePerSecond = Mathf.Pi * 2 * 2;
+	//public float rollStabilizeSpeedFactor = 10f;
+	//public float rollSnapAngle = 0.1f;
 
 
-	private Vector3 _freeCamRemoveRollHelper(float delta, ref Vector3 localUp)
+	float freecamRollFixDegPerSec = 360;
+	float freecamRollFixAcceleration = 2;
+
+	private Vector3 _freeCamRemoveRollHelper(float delta, ref Vector3 localUp, ref Vector3 targetUp)
 	{
 		if (freecamRemoveRoll != true)
 		{
 			return localUp;
 		}
 
-		var upDiff = _worldUp - localUp;
-		//var upDiffLen = upDiff.Length() / 2;// Mathf.Clamp(upDiff.Length(), 0, 1);
-		//var newUp = _up.LinearInterpolate(localUp, upDiffLen);
-		var newUp = (_worldUp + localUp) / 2;
+		var cross = localUp.Cross(targetUp);
+		var angle = localUp.AngleTo(targetUp);
 
 
-		var angle = _worldUp.AngleTo(localUp);
-		var lenDiff = upDiff.Length();
-		var cross = localUp.Cross(_worldUp);
-		//var appliedAngle = Mathf.Clamp(10 * angle * delta, 0,2* Mathf.Pi *delta);
-		var appliedAngle = Mathf.Clamp(angle * rollStabilizeSpeedFactor, 0, rollMaxStabilizePerSecond) * delta;
-		newUp = localUp.Rotated(cross, appliedAngle);
+		var angleToFix = (Mathf.Deg2Rad(freecamRollFixDegPerSec) + (angle * freecamRollFixAcceleration)) * delta;
 
-		//if (angle < rollSnapAngle)
-		//{
-		//	newUp = _up;
-		//}
+		if (angleToFix > angle)
+		{
+			return targetUp;
+		}
+		//angleToFix = Mathf.Min(angleToFix, angle);
 
-		//newUp = localUp;
+		var toReturn = localUp.Rotated(cross, angleToFix);
+
+		return toReturn;
 
 
-		//	GD.Print(" localUp =", localUp.ToString("F2")
-		//, " angle=", angle.ToString("F2")
-		//, " appliedAngle=", appliedAngle.ToString("F2")
-		//, " upDiff=", upDiff.ToString("F2")
-		//, " lenDiff=", lenDiff.ToString("F2")
-		//, " newUp=", newUp.ToString("F2"));
 
-		return newUp;
+
+
+
+
+
+
+
+		//////var upDiff = _worldUp - localUp;
+		////////var upDiffLen = upDiff.Length() / 2;// Mathf.Clamp(upDiff.Length(), 0, 1);
+		////////var newUp = _up.LinearInterpolate(localUp, upDiffLen);
+		//////var newUp = (_worldUp + localUp) / 2;
+
+
+		
+		//////var lenDiff = upDiff.Length();
+		
+		////////var appliedAngle = Mathf.Clamp(10 * angle * delta, 0,2* Mathf.Pi *delta);
+		//////var appliedAngle = Mathf.Clamp(angle * rollStabilizeSpeedFactor, 0, rollMaxStabilizePerSecond) * delta;
+		//////newUp = localUp.Rotated(cross, appliedAngle);
+
+		////////if (angle < rollSnapAngle)
+		////////{
+		////////	newUp = _up;
+		////////}
+
+		////////newUp = localUp;
+
+
+		////////	GD.Print(" localUp =", localUp.ToString("F2")
+		////////, " angle=", angle.ToString("F2")
+		////////, " appliedAngle=", appliedAngle.ToString("F2")
+		////////, " upDiff=", upDiff.ToString("F2")
+		////////, " lenDiff=", lenDiff.ToString("F2")
+		////////, " newUp=", newUp.ToString("F2"));
+
+		//////return newUp;
 
 	}
 	public override void _Process(float delta)
@@ -218,7 +246,7 @@ public class InputController : Spatial
 		{
 			if (freecamRemoveRoll == true)
 			{
-				var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp);
+				var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp,ref _worldUp);
 				Transform = Transform.LookingAt(localLookDir + xform.origin, newUp);
 			}
 		}
@@ -290,7 +318,7 @@ public class InputController : Spatial
 
 			if (freecamRemoveRoll == true)
 			{
-				selectedUp = _freeCamRemoveRollHelper(delta, ref selectedUp);
+				selectedUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp);
 			}
 			Transform = Transform.LookingAt(targetLookPosition, selectedUp);
 
