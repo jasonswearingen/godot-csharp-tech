@@ -8,3 +8,5 @@ lib/src/ThreadStorm/bin/
 demo-projects/scratch/.mono/
 demo-projects/scratch/.import/
 packages/
+demo-projects/scratch/android/
+*.import
