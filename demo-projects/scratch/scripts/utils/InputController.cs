@@ -1,6 +1,10 @@
 using Godot;
 using System;
 
+//todo:  rollfix needs to be applied after applying inputs (not just start of update loop)
+//investigate vector flipping (ln 196)
+//fix freecam (roll adjust when moving back to center
+//only do roll fix if in freecam mode.
 
 public class _MouseInputHandler : Node
 {
@@ -10,11 +14,16 @@ public class _MouseInputHandler : Node
 
 	/// <summary>
 	/// after reading this, you should set it to zero  (not automatically reset when input stops)
+	/// 
+	/// relative to Vector3.forward  (0,0,-1)
+	/// right = +x
+	/// up = +y
 	/// </summary>
 	public Vector2 lastMouseMovement;
 
 	public override void _Ready()
 	{
+		GD.Print("forward", Vector3.Forward.ToString("F2"));
 	}
 
 	public override void _Process(float delta)
@@ -32,9 +41,12 @@ public class _MouseInputHandler : Node
 		{
 			var mouse = input as InputEventMouseMotion;
 			var relMove = mouse.Relative;
-			//GD.Print($"relMove={relMove.ToString("F2")}");
+			GD.Print($"relMove={relMove.ToString("F2")}");
+			relMove.y *= -1;  //mouse flips up/down
 			relMove *= lookSensitivityMouse;
-			lastMouseMovement = -mouse.Relative;
+			lastMouseMovement = relMove;
+			//lastMouseMovement = mouse.Relative * lookSensitivityMouse;
+			//lastMouseMovement = -mouse.Relative;
 		}
 	}
 
@@ -45,6 +57,8 @@ public class _KeyboardInputHandler : Node
 
 	/// <summary>
 	/// current state of inputs to "game_look_x" and "game_look_y"  inputs
+	/// right = +x
+	/// up = +y
 	/// </summary>
 	public Vector2 lookState;
 
@@ -65,7 +79,7 @@ public class _KeyboardInputHandler : Node
 		//! use a shorter/simpler way to control character than shown in video
 		lookState = new Vector2()
 		{
-			x = Input.GetActionStrength("ui_left") - Input.GetActionStrength("ui_right"),
+			x = Input.GetActionStrength("ui_right") - Input.GetActionStrength("ui_left"),
 			y = Input.GetActionStrength("ui_up") - Input.GetActionStrength("ui_down"),
 		};
 
@@ -97,11 +111,11 @@ public class InputController : Spatial
 	/// set to true to use a tradtional gimbal camera.  no roll, but restricts camera from looking past straight up/down
 	/// </summary>
 	[Export]
-	public bool useGimbalCamera = false;
+	public bool useGimbalCamera = true;
 	/// <summary>
 	/// if useGimbalCamera==true, how many degrees to restrict camera view angles when looking up or down.  useful to prevent artifacts (camera flipping direction)
 	/// </summary>
-	public float gimcamDeadzoneDeg = 0.5f;
+	public float gimcamDeadzoneDeg = 1.0f;
 
 	private Vector3 _up = Vector3.Up;
 
@@ -154,12 +168,12 @@ public class InputController : Spatial
 		//newUp = localUp;
 
 
-	//	GD.Print(" localUp =", localUp.ToString("F2")
-	//, " angle=", angle.ToString("F2")
-	//, " appliedAngle=", appliedAngle.ToString("F2")
-	//, " upDiff=", upDiff.ToString("F2")
-	//, " lenDiff=", lenDiff.ToString("F2")
-	//, " newUp=", newUp.ToString("F2"));
+		//	GD.Print(" localUp =", localUp.ToString("F2")
+		//, " angle=", angle.ToString("F2")
+		//, " appliedAngle=", appliedAngle.ToString("F2")
+		//, " upDiff=", upDiff.ToString("F2")
+		//, " lenDiff=", lenDiff.ToString("F2")
+		//, " newUp=", newUp.ToString("F2"));
 
 		return newUp;
 
@@ -170,11 +184,9 @@ public class InputController : Spatial
 		var xform = Transform;
 		var localRight = Transform.basis.Column0;
 		var localUp = Transform.basis.Column1;
-		if (useGimbalCamera == true)
-		{
-			localUp = _up;
-		}
-		
+
+		var selectedUp = useGimbalCamera ? _up : localUp;
+
 		var localFwd = Transform.basis.Column2; //alt approach:  localFwd = this.Transform.Xform(Vector3.Forward) - Transform.origin;
 		var localPos = Transform.origin;
 #if DEBUG
@@ -183,6 +195,13 @@ public class InputController : Spatial
 		{
 			throw new Exception($"scale={scale:F2}.  non 1 scale is unexpected.  need to refactor the basis components to account for this.");
 		}
+		if (localRight.IsNormalized() && localUp.IsNormalized() && localFwd.IsNormalized())
+		{
+		}
+		else
+		{
+			throw new Exception($"transform not normalized.={Transform.ToString("F2")}.  need to refactor the basis components to account for this.");
+		}
 #endif
 
 		//this is actually the "backwards" vector of the matrix.  kinda dumb.
@@ -190,7 +209,7 @@ public class InputController : Spatial
 
 
 		var lookInput = keyboardInput.lookState + mouseInput.lastMouseMovement;
-		lookInput *= -1; // have to flip because our "look at" vector is actually behind, not in front.  dumb but ok
+		//lookInput *= -1; // have to flip because our "look at" vector is actually behind, not in front.  dumb but ok
 		mouseInput.lastMouseMovement = Vector2.Zero;  //clear out mouse when done reading it, as it doesn't auto-clear like keyboard input.
 
 
@@ -208,31 +227,25 @@ public class InputController : Spatial
 		else
 		{
 
-
-			var localIsNormalized = false;
-			if (localRight.IsNormalized() && localUp.IsNormalized() && localFwd.IsNormalized())
-			{
-				localIsNormalized = true;
-			}
-			GD.Print("localIsNormalized=", localIsNormalized);
-
-			//var newUp = localUp;
-			//if (rollStabilize == true)
-			//{
-			//	newUp = _stabalizeUpHelper(delta, ref localUp);
-			//}
-					   
-			//look horizontal (left-right) == lookInput.X
-			var targetHoriz = localLookDir.Cross(localUp);
-			var adjustHoriz = targetHoriz * (lookInput.x * delta);
-
-			//look vertical (up-down) == lookInput.Y
-			var targetVert = localLookDir.Cross(localRight);
-			var adjustVert = targetVert * (lookInput.y * delta);
+			////////////////////////////////////////
+			//// ========= HANDLE MOVEMENT
 
 
-					   
-			var newTarget = localLookDir + adjustHoriz + adjustVert;
+			//HORIZONTAL:  need to get a new right vector from our "targetUp", 
+			//because gimbalCamera's up isn't our local Transform's up.
+			//if we used local transform up while in gimbalCam mode, you would rotate faster towards the poles (bad)
+			var selectedRight = localLookDir.Cross(selectedUp);
+			var adjustHoriz = selectedRight * (lookInput.x * delta);
+
+			//VERTICAL:  we can just use our local transform's up/
+			//if we were in gimbal mode and used worldup, we'd get slower as we move towards the poles (bad)
+			var adjustVert = localUp * lookInput.y * delta;
+
+			//GD.Print($"localRight2 {targetRight.ToString("F2")}  localRight {localRight.ToString("F2")}  localDown {localDown.ToString("F2")}  localUp {localUp.ToString("F2")}");
+
+
+
+			var targetLookDir = localLookDir + adjustHoriz + adjustVert;
 
 			/////////////////////////
 			//adjust gimbal camera properties
@@ -251,18 +264,18 @@ public class InputController : Spatial
 						}
 						return false;
 					}
-					if (_isOverGimbalMaxAngle(ref newTarget, ref _up, gimcamDeadzoneDeg))
+					if (_isOverGimbalMaxAngle(ref targetLookDir, ref selectedUp, gimcamDeadzoneDeg))
 					{
 						//over max angle, so try only horiz
-						newTarget = localLookDir + adjustHoriz;
-						if (_isOverGimbalMaxAngle(ref newTarget, ref _up, gimcamDeadzoneDeg))
+						targetLookDir = localLookDir + adjustHoriz;
+						if (_isOverGimbalMaxAngle(ref targetLookDir, ref selectedUp, gimcamDeadzoneDeg))
 						{
 							//over max angle, so try only vert components
-							newTarget = localLookDir + adjustVert;
-							if (_isOverGimbalMaxAngle(ref newTarget, ref _up, gimcamDeadzoneDeg))
+							targetLookDir = localLookDir + adjustVert;
+							if (_isOverGimbalMaxAngle(ref targetLookDir, ref selectedUp, gimcamDeadzoneDeg))
 							{
 								//over max angle, so don't set.
-								newTarget = localLookDir;
+								targetLookDir = localLookDir;
 							}
 						}
 					}
@@ -270,22 +283,13 @@ public class InputController : Spatial
 			}
 
 
-			if (newTarget.LengthSquared() > 1)
+			if (targetLookDir.LengthSquared() > 1)
 			{
-				newTarget = newTarget.Normalized();
+				targetLookDir = targetLookDir.Normalized();
 			}
-			localLookDir = newTarget;
 
-
-
-
-
-			var xformTarget = localLookDir + xform.origin;
-
-
-
-			//xform.origin = Vector3.Zero;
-			Transform = Transform.LookingAt(xformTarget, localUp);
+			var targetLookPosition = targetLookDir + xform.origin;
+			Transform = Transform.LookingAt(targetLookPosition, selectedUp);
 
 
 
