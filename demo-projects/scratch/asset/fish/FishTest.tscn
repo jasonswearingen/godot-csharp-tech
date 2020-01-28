@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://asset/fish/Fish Perch.obj" type="ArrayMesh" id=1]
+[ext_resource path="res://asset/fish/fish.shadermaterial.tres" type="Material" id=2]
+
+[node name="Spatial" type="Spatial"]
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+material_override = ExtResource( 2 )
+mesh = ExtResource( 1 )
+material/0 = null
+material/1 = null
+material/2 = null
