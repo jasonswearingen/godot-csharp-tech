@@ -131,8 +131,11 @@ namespace godot_csharp_tech.addons
 		}
 		public override void _Process(float delta)
 		{
+
+
+
 			//get transform components:  https://community.khronos.org/t/get-direction-from-transformation-matrix-or-quat/65502/2
-			var xform = Transform;
+			//var xform = Transform;
 			var localRight = Transform.basis.Column0;
 			var localUp = Transform.basis.Column1;
 
@@ -158,11 +161,30 @@ namespace godot_csharp_tech.addons
 			//this is actually the "backwards" vector of the matrix.  kinda dumb.
 			var localLookDir = localFwd * -1;
 
+			_ProcessHelper_Look(delta, localUp, ref selectedUp, localPos, ref localLookDir);
 
+			///////////////////////
+			//MOVEMENT
+
+			var moveInput = keyboardInput.moveState;
+			//move after look, because our move code changes localPos, which would mess up look code if we did that first.
+			if (moveInput != Vector3.Zero)
+			{
+				localPos += localRight * moveInput.x;
+				localPos += localLookDir * moveInput.z;
+				localPos += localUp * moveInput.y;
+				var tmpTransform = Transform;
+				tmpTransform.origin = localPos;
+				Transform = tmpTransform;
+			}
+
+		}
+
+		private void _ProcessHelper_Look(float delta, Vector3 localUp, ref Vector3 selectedUp, Vector3 localPos, ref Vector3 localLookDir)
+		{
 			var lookInput = keyboardInput.lookState + mouseInput.lastMouseMovement;
 			//lookInput *= -1; // have to flip because our "look at" vector is actually behind, not in front.  dumb but ok
 			mouseInput.lastMouseMovement = Vector2.Zero;  //clear out mouse when done reading it, as it doesn't auto-clear like keyboard input.
-
 
 
 
@@ -171,7 +193,11 @@ namespace godot_csharp_tech.addons
 				if (freecamRemoveRoll == true)
 				{
 					var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp, ref localLookDir);
-					Transform = Transform.LookingAt(localLookDir + xform.origin, newUp);
+					var tmpTransform = Transform.LookingAt(localLookDir + localPos, newUp);
+					//tmpTransform.origin = localPos;
+					Transform = tmpTransform;
+					//Transform.SetLookAt(localPos, localLookDir + localPos, newUp);
+					//Transform = new Transform(localRight, newUp, localLookDir *-1, localPos);
 				}
 			}
 			else
@@ -238,21 +264,25 @@ namespace godot_csharp_tech.addons
 					targetLookDir = targetLookDir.Normalized();
 				}
 
-				var targetLookPosition = targetLookDir + xform.origin;
+				var targetLookPosition = targetLookDir + localPos;
 
 				if (freecamRemoveRoll == true)
 				{
 					selectedUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp, ref targetLookDir);
 				}
-				Transform = Transform.LookingAt(targetLookPosition, selectedUp);
+
+				var tmpTransform = Transform.LookingAt(targetLookPosition, selectedUp);
+				//tmpTransform.origin = localPos;
+				Transform = tmpTransform;
+
+				//Transform = new Transform(selectedRight, selectedUp, targetLookDir * -1, localPos);
+				//Transform.SetLookAt(localPos, targetLookPosition, selectedUp);
 
 
 
 
 
 			}
-
-
 		}
 
 		public class _MouseInputHandler : Node
@@ -307,12 +337,10 @@ namespace godot_csharp_tech.addons
 				{
 					var mouse = input as InputEventMouseMotion;
 					var relMove = mouse.Relative;
-					GD.Print($"relMove={relMove.ToString("F2")}");
+					//GD.Print($"relMove={relMove.ToString("F2")}");
 					relMove.y *= -1;  //mouse flips up/down
 					relMove *= lookSensitivityMouse;
 					lastMouseMovement = relMove;
-					//lastMouseMovement = mouse.Relative * lookSensitivityMouse;
-					//lastMouseMovement = -mouse.Relative;
 				}
 			}
 
@@ -327,9 +355,23 @@ namespace godot_csharp_tech.addons
 			/// up = +y
 			/// </summary>
 			public Vector2 lookState;
+			public Vector3 moveState;
 
+
+
+			[Export]
+			public float moveSensitivity = 0.01f;
 			public override void _Ready()
 			{
+
+				
+
+
+
+				//InputMap.AddAction("p1_move_fwd");
+				//InputMap.ActionAddEvent("p1_move_fwd", new InputEventKey() { Scancode = 'w' });
+
+
 			}
 
 			public override void _Process(float delta)
@@ -355,6 +397,13 @@ namespace godot_csharp_tech.addons
 				//	lookInputKeyboard = lookInputKeyboard.Normalized();
 				//}
 
+				moveState = new Vector3()
+				{
+					x = Input.GetActionStrength("p1_move_right") - Input.GetActionStrength("p1_move_left"),
+					z = Input.GetActionStrength("p1_move_forward") - Input.GetActionStrength("p1_move_backward"),
+					y = Input.GetActionStrength("p1_move_up") - Input.GetActionStrength("p1_move_down"),
+				};
+				moveState *= (1 + Input.GetActionStrength("p1_move_fast")) * moveSensitivity;
 			}
 
 
