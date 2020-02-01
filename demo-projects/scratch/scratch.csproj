@@ -71,6 +71,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="asset\fish\FishControlFacade.cs" />
+    <Compile Include="asset\fish\FishTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="screens\BlockTest.cs" />
     <Compile Include="screens\ProcTest.cs" />

@@ -38,7 +38,11 @@ public class ProcTest : Spatial
 		var meshInstance = new MeshInstance();
 		meshInstance.Mesh = mesh;
 		meshInstance.MaterialOverride = sm;
+		meshInstance.AddChild(new FishShaderControl() {fish_shaderMaterial=sm, });
 		AddChild(meshInstance);
+		//fishControl._updateShader();
+
+
 	}
 
 	//  // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -49,11 +53,6 @@ public class ProcTest : Spatial
 }
 
 
-//public class FishShaderControl : Node
-//{
-//	[Export]
-//	//public float frequency
-//}
 
 
 public class ProcMultimesh : MultiMeshInstance
