@@ -174,7 +174,7 @@ namespace godot_csharp_tech.addons
 			///////////////////////
 			//MOVEMENT
 
-			var moveInput = keyboardInput.moveState;
+			var moveInput = keyboardInput.moveState * delta;
 			//move after look, because our move code changes localPos, which would mess up look code if we did that first.
 			if (moveInput != Vector3.Zero)
 			{
@@ -376,7 +376,7 @@ namespace godot_csharp_tech.addons
 
 
 			[Export]
-			public float moveSensitivity = 0.01f;
+			public float moveSensitivity = 10f;//0.01f;
 			public override void _Ready()
 			{
 
