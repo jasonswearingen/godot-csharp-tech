@@ -4,16 +4,16 @@ shader_type spatial;
 render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx; 
 
 //default parameters
-uniform vec4 albedo : hint_color;
+uniform vec4 albedo : hint_color = vec4(1);
 uniform sampler2D texture_albedo : hint_albedo;
-uniform float specular;
-uniform float metallic;
-uniform float roughness : hint_range(0,1);
-uniform float point_size : hint_range(0,128);
-uniform vec3 uv1_scale;
-uniform vec3 uv1_offset;
-uniform vec3 uv2_scale;
-uniform vec3 uv2_offset;
+uniform float specular = 0.5;
+uniform float metallic = 0;
+uniform float roughness : hint_range(0,1) = 1;
+//uniform float point_size : hint_range(0,128);
+uniform vec3 uv1_scale = vec3(1);
+uniform vec3 uv1_offset = vec3(0);
+uniform vec3 uv2_scale = vec3(1);
+uniform vec3 uv2_offset = vec3(0);
 
 //////////////////////////////demo parameters
 //how fast you want the fake swimming to move
@@ -53,9 +53,6 @@ void vertex() {
 	float currentModelZLoc = (-VERTEX.z + modelExtent)/modelLength;	
 
 
-	
-
-
 //	////////////make model move around over time
 	VERTEX.x += cos(time * displacementSpeed.x) * displacementMag.x;
 	VERTEX.y += sin(time* displacementSpeed.y) * displacementMag.y;
@@ -68,38 +65,17 @@ void vertex() {
 	
 	//weigh vertex swim animations based on where we are on the model	
 	float animationMask = smoothstep(animationStartBias,animationFullBias, currentModelZLoc);
-	//COLOR.rgb = vec3(animationMask);  //can enable this line to debug animationMask issues
+	//COLOR.rgb = vec3(animationMask);  //can enable this line to debug animationMask issues (set albedo to this color in the fragment() shader function)
 
 	/////////////////wave (horizontal+vertical)	
 	vec3 bodyPos = VERTEX;
 	VERTEX.xy += cos(time + bodyPos.zz) * waveMagnitude.xy * animationMask; 
 
-	///////////////////twist
+	///////////////////twist ("corkscrew" effect)
 	float twistAngle = cos(time+VERTEX.z) * 0.3 * twist;
 	mat2 twistMatrix = rotate2d(twistAngle);
 	VERTEX.xy =mix(VERTEX.xy, twistMatrix * VERTEX.xy, animationMask); //can't multiplay animation mask with matrix, instead use "mix()" fcn
-//
-//	///////////////////  mask 
-//	//smoothstep()
-//	//mask = 1.0-VERTEX.z;
-//	COLOR.rgb = vec3(animationMask);  //set vertex color, can be applied in fragment shader (ALBEDO = COLOR.rgb;)
-//	
-	
-//
-	
-	//VERTEX = (INV_PROJECTION_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	
-	
-	
-//	if(VERTEX.z <= 0.0){
-//		COLOR.b = VERTEX.z +5.0;
-//	}else if(VERTEX.z <= 1.0){
-//		COLOR.r = VERTEX.z;
-//	}else if(VERTEX.z <= 2.0){
-//		COLOR.g = VERTEX.z;
-//	}else if(VERTEX.z <= 3.0){
-//		COLOR.b = VERTEX.z;
-//	}
+
 }
 
 
@@ -109,7 +85,7 @@ void fragment() {
 	vec2 base_uv = UV;
 	vec4 albedo_tex = texture(texture_albedo,base_uv);
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
-	//ALBEDO = COLOR.rgb;
+	//ALBEDO = COLOR.rgb;  //can enable this line to debug animationMask issues (set vertex color in the vertex() shader function)
 	METALLIC = metallic;
 	ROUGHNESS = roughness;
 	SPECULAR = specular;

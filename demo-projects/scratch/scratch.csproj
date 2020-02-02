@@ -71,6 +71,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="asset\cube\ProcCube.cs" />
     <Compile Include="asset\fish\FishControlFacade.cs" />
     <Compile Include="asset\fish\FishTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -3,5 +3,6 @@
 		"activityBar.background": "#452520",
 		"titleBar.activeBackground": "#61342D",
 		"titleBar.activeForeground": "#FCF9F9"
-	}
+	},
+	"godot_tools.editor_path": "c:\\repos\\godot\\Godot_v3.2-stable_mono_win64\\Godot_v3.2-stable_mono_win64.exe"
 }

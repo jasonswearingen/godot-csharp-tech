@@ -30,26 +30,15 @@ public class ProcTest : Spatial
 		AddChild(dirLight);
 
 
-		var mesh = GD.Load<Mesh>("res://asset/fish/Fish Perch.obj");
-		var sm = GD.Load<ShaderMaterial>("res://asset/fish/fish.shadermaterial.tres");
-		//mesh.SurfaceSetMaterial(0, sm);
-		//mesh.SurfaceSetMaterial(1, sm);
+		var procMM = new ProcMultimesh();
+		AddChild(procMM);
 
-		var meshInstance = new MeshInstance();
-		meshInstance.Mesh = mesh;
-		meshInstance.MaterialOverride = sm;
-		meshInstance.AddChild(new FishShaderControl() {fish_shaderMaterial=sm, });
-		AddChild(meshInstance);
-		//fishControl._updateShader();
+
 
 
 	}
 
-	//  // Called every frame. 'delta' is the elapsed time since the previous frame.
-	//  public override void _Process(float delta)
-	//  {
-	//      
-	//  }
+	
 }
 
 
@@ -61,14 +50,98 @@ public class ProcMultimesh : MultiMeshInstance
 	{
 		base._Ready();
 
+
+		var mesh = GD.Load<Mesh>("res://asset/fish/Fish1.obj");
+		var shader = GD.Load<Shader>("res://asset/fish/fish1.shader");
+		var diffuse = GD.Load<Texture>("res://asset/fish/Fish1-diffuse_base.png");
+		shader.SetDefaultTextureParam("texture_albedo", diffuse);
+
+
 		var mm = new MultiMesh();
 		mm.TransformFormat = MultiMesh.TransformFormatEnum.Transform3d;
 		mm.ColorFormat = MultiMesh.ColorFormatEnum.None;
 		mm.CustomDataFormat = MultiMesh.CustomDataFormatEnum.None;
-		mm.InstanceCount = 1000;
-		mm.VisibleInstanceCount = -1;
+		
 
-		//mm.Mesh = = GD.Load<Mesh>("res://asset/model/export/Fish Perch.obj");
-		//mm.Mesh.PAT
+		this.Multimesh = new MultiMesh();
+		this.Multimesh.TransformFormat = MultiMesh.TransformFormatEnum.Transform3d;
+		this.Multimesh.CustomDataFormat = MultiMesh.CustomDataFormatEnum.Float;
+		this.Multimesh.Mesh = mesh;
+		//set shader
+		{
+			var shadMat = new ShaderMaterial();
+			shadMat.Shader = shader;
+			shadMat.SetShaderParam("texture_albedo", diffuse);
+			this.MaterialOverride = shadMat;
+		}
+		this.Multimesh.InstanceCount = 10000;  //need to do this after setting the TransformFormat
+										   //mm.InstanceCount = 1000;
+										   //mm.VisibleInstanceCount = -1;
+
+
+		//set initial placement
+		var visibleCount = this.Multimesh.VisibleInstanceCount;
+		if (visibleCount == -1)
+		{
+			visibleCount = this.Multimesh.InstanceCount;
+		}
+
+		//this vector3 array is actually a transform array (4 vector 3's)
+		var xforms = this.Multimesh.TransformArray;
+
+
+		//put all the fish into a grid
+		{
+			var seperationDistance = 5;
+			var dim = Math.Pow(visibleCount, 1.0 / 3);
+			GD.Print($"visibleCount={visibleCount}, xformsLen={xforms.Length}, dim={dim}");
+			var i = 0;
+			for (var x = 0; x < dim; x++)
+			{
+				for (var z = 0; z < dim; z++)
+				{
+					for (var y = 0; y < dim; y++)
+					{
+						if (i >= visibleCount)
+						{
+							break; //need this because of rounding with our dim variable.
+						}
+						var loc = new Vector3((x * seperationDistance), y * seperationDistance, z * seperationDistance);
+						//loc offset 3 is the position in a transform
+						xforms[(i * 4) + 3] = loc;
+						//this.Multimesh.SetInstanceTransform(i, new Transform(Basis.Identity, loc)); //instead of updating 1 at a time, we update all after the loop is done.
+						i++;
+						
+					}
+				}
+			}
+		}
+		this.Multimesh.TransformArray = xforms;
+
 	}
+
+	private Random rand = new Random(0);
+	public override void _Process(float delta)
+	{
+		base._Process(delta);
+
+		var visibleCount = this.Multimesh.VisibleInstanceCount;
+		if (visibleCount == -1)
+		{
+			visibleCount = this.Multimesh.InstanceCount;
+		}
+
+		var xforms = this.Multimesh.TransformArray;
+
+		for (var i = 0; i < visibleCount; i++)
+		{
+			var deltaLoc = new Vector3((float)(rand.NextDouble() - 0.5), (float)(rand.NextDouble() - 0.5), (float)(rand.NextDouble() - 0.5)) / 10;
+			var curLoc = xforms[(i * 4) + 3];
+			var newLoc = curLoc + deltaLoc;
+			xforms[(i * 4) + 3] = newLoc;
+			//this.Multimesh.SetInstanceTransform(i, new Transform(Basis.Identity, newLoc));  //instead of updating 1 at a time, we update all after the loop is done.
+		}
+		this.Multimesh.TransformArray = xforms;
+	}
+
 }

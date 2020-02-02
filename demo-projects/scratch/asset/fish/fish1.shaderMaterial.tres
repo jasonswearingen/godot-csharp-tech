@@ -1,0 +1,26 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=2]
+
+[ext_resource path="res://asset/fish/fish1.shader" type="Shader" id=1]
+[ext_resource path="res://asset/fish/Fish1-diffuse_base.png" type="Texture" id=2]
+
+[resource]
+shader = ExtResource( 1 )
+shader_param/albedo = Color( 1, 1, 1, 1 )
+shader_param/specular = 0.5
+shader_param/metallic = 0.0
+shader_param/roughness = 1.0
+shader_param/uv1_scale = Vector3( 1, 1, 1 )
+shader_param/uv1_offset = Vector3( 0, 0, 0 )
+shader_param/uv2_scale = Vector3( 1, 1, 1 )
+shader_param/uv2_offset = Vector3( 0, 0, 0 )
+shader_param/time_scale = 3.0
+shader_param/time_offset = 0.0
+shader_param/displacementMag = Vector2( 0.1, 0.1 )
+shader_param/displacementSpeed = Vector2( 0.4, 0.333 )
+shader_param/pivot = 0.1
+shader_param/waveMagnitude = Vector2( 0.5, 0.05 )
+shader_param/twist = 0.51
+shader_param/modelLength = 6.0
+shader_param/animationStartBias = 0.2
+shader_param/animationFullBias = 1.5
+shader_param/texture_albedo = ExtResource( 2 )

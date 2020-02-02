@@ -36,6 +36,7 @@ namespace godot_csharp_tech.addons
 	//    //up-down:
 	//    this.Rotate(right, Mathf.Deg2Rad(lookInput.z) * delta * lookSensitivity);
 	// the following code is a more complex solution allowing looking "past" the up vector
+	[Tool]
 	public class InputController : Spatial
 	{
 
@@ -54,13 +55,20 @@ namespace godot_csharp_tech.addons
 		private _MouseInputHandler mouseInput;
 		private _KeyboardInputHandler keyboardInput;
 
-
+		/// <summary>
+		/// node you want controlled by this inputController.   if not set, defaults to itself.
+		/// </summary>
+		public Spatial nodeToControl;
 		public override void _Ready()
 		{
 			mouseInput = new _MouseInputHandler();
 			AddChild(mouseInput);
 			keyboardInput = new _KeyboardInputHandler();
 			AddChild(keyboardInput);
+			if(nodeToControl == null)
+			{
+				nodeToControl = this;
+			}
 		}
 
 		[Export]
@@ -132,19 +140,19 @@ namespace godot_csharp_tech.addons
 		public override void _Process(float delta)
 		{
 
-
+			
 
 			//get transform components:  https://community.khronos.org/t/get-direction-from-transformation-matrix-or-quat/65502/2
 			//var xform = Transform;
-			var localRight = Transform.basis.Column0;
-			var localUp = Transform.basis.Column1;
+			var localRight = nodeToControl.Transform.basis.Column0;
+			var localUp = nodeToControl.Transform.basis.Column1;
 
 			var selectedUp = useGimbalCamera ? _worldUp : localUp;
 
-			var localFwd = Transform.basis.Column2; //alt approach:  localFwd = this.Transform.Xform(Vector3.Forward) - Transform.origin;
-			var localPos = Transform.origin;
+			var localFwd = nodeToControl.Transform.basis.Column2; //alt approach:  localFwd = this.Transform.Xform(Vector3.Forward) - Transform.origin;
+			var localPos = nodeToControl.Transform.origin;
 #if DEBUG
-			var scale = Transform.basis.Scale;
+			var scale = nodeToControl.Transform.basis.Scale;
 			if (scale.IsEqualApprox(Vector3.One) == false)
 			{
 				throw new Exception($"scale={scale:F2}.  non 1 scale is unexpected.  need to refactor the basis components to account for this.");
@@ -154,7 +162,7 @@ namespace godot_csharp_tech.addons
 			}
 			else
 			{
-				throw new Exception($"transform not normalized.={Transform.ToString("F2")}.  need to refactor the basis components to account for this.");
+				throw new Exception($"transform not normalized.={nodeToControl.Transform.ToString("F2")}.  need to refactor the basis components to account for this.");
 			}
 #endif
 
@@ -173,9 +181,9 @@ namespace godot_csharp_tech.addons
 				localPos += localRight * moveInput.x;
 				localPos += localLookDir * moveInput.z;
 				localPos += localUp * moveInput.y;
-				var tmpTransform = Transform;
+				var tmpTransform = nodeToControl.Transform;
 				tmpTransform.origin = localPos;
-				Transform = tmpTransform;
+				nodeToControl.Transform = tmpTransform;
 			}
 
 		}
@@ -193,9 +201,9 @@ namespace godot_csharp_tech.addons
 				if (freecamRemoveRoll == true)
 				{
 					var newUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp, ref localLookDir);
-					var tmpTransform = Transform.LookingAt(localLookDir + localPos, newUp);
+					var tmpTransform = nodeToControl.Transform.LookingAt(localLookDir + localPos, newUp);
 					//tmpTransform.origin = localPos;
-					Transform = tmpTransform;
+					nodeToControl.Transform = tmpTransform;
 					//Transform.SetLookAt(localPos, localLookDir + localPos, newUp);
 					//Transform = new Transform(localRight, newUp, localLookDir *-1, localPos);
 				}
@@ -271,9 +279,9 @@ namespace godot_csharp_tech.addons
 					selectedUp = _freeCamRemoveRollHelper(delta, ref selectedUp, ref _worldUp, ref targetLookDir);
 				}
 
-				var tmpTransform = Transform.LookingAt(targetLookPosition, selectedUp);
+				var tmpTransform = nodeToControl.Transform.LookingAt(targetLookPosition, selectedUp);
 				//tmpTransform.origin = localPos;
-				Transform = tmpTransform;
+				nodeToControl.Transform = tmpTransform;
 
 				//Transform = new Transform(selectedRight, selectedUp, targetLookDir * -1, localPos);
 				//Transform.SetLookAt(localPos, targetLookPosition, selectedUp);
@@ -285,6 +293,7 @@ namespace godot_csharp_tech.addons
 			}
 		}
 
+		[Tool]
 		public class _MouseInputHandler : Node
 		{
 
@@ -305,7 +314,7 @@ namespace godot_csharp_tech.addons
 
 			public override void _Ready()
 			{
-				if (captureMouse)
+				if (captureMouse && Engine.EditorHint==false) 
 				{
 					Input.SetMouseMode(Input.MouseMode.Captured);
 				}
@@ -318,7 +327,13 @@ namespace godot_csharp_tech.addons
 			}
 			public override void _UnhandledInput(InputEvent input)
 			{
+
 				base._UnhandledInput(input);
+
+				if (Engine.EditorHint)
+				{
+					return;
+				}
 
 				if (input.IsActionPressed("global_mouse_capture"))
 				{
@@ -346,6 +361,7 @@ namespace godot_csharp_tech.addons
 
 		}
 
+		[Tool]
 		public class _KeyboardInputHandler : Node
 		{
 
@@ -383,6 +399,12 @@ namespace godot_csharp_tech.addons
 			public override void _UnhandledInput(InputEvent input)
 			{
 				base._UnhandledInput(input);
+
+				if (Engine.EditorHint)
+				{
+					return;
+				}
+
 
 				//! use a shorter/simpler way to control character than shown in video
 				lookState = new Vector2()
