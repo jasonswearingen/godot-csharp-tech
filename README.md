@@ -21,9 +21,11 @@ The end goal is a high performance multithreaded game framework + logic "engine"
 
 
 # Current status
+See the [DEV branch](./tree/dev) for the ***current* current status**
+
 **A dumpster fire**.  Feel free to critique, but avoid using "for real" until architecture and  design patterns are further established.  If you want to use the things here, probably the best would be to clone the repo and open the ```scratch``` project in godot.  Adding this stuff to your existing c# project is doable, if you are pretty good with fixing .net build issues (mismatched nuget packages, retargeting runtimes, etc). 
 
-Main branch is semi-stable.  Dev branch might not build.
+Main branch is semi-stable.  Dev branch might not build.  
 
 
 
