@@ -3,7 +3,7 @@ using System;
 using godot_csharp_tech.addons;
 using System.Runtime.InteropServices;
 
-[Tool]
+
 public class ProcTest : Spatial
 {
 	// Declare member variables here. Examples:
@@ -39,7 +39,7 @@ public class ProcTest : Spatial
 
 	}
 
-	
+
 }
 
 
@@ -48,8 +48,8 @@ public class ProcMultimesh : MultiMeshInstance
 {
 
 	private Vector3[] xforms;
-	
-	
+
+
 	public override void _Ready()
 	{
 		base._Ready();
@@ -65,7 +65,7 @@ public class ProcMultimesh : MultiMeshInstance
 		mm.TransformFormat = MultiMesh.TransformFormatEnum.Transform3d;
 		mm.ColorFormat = MultiMesh.ColorFormatEnum.None;
 		mm.CustomDataFormat = MultiMesh.CustomDataFormatEnum.None;
-		
+
 
 		this.Multimesh = new MultiMesh();
 		this.Multimesh.TransformFormat = MultiMesh.TransformFormatEnum.Transform3d;
@@ -78,9 +78,9 @@ public class ProcMultimesh : MultiMeshInstance
 			shadMat.SetShaderParam("texture_albedo", diffuse);
 			this.MaterialOverride = shadMat;
 		}
-		this.Multimesh.InstanceCount =  10000;  //need to do this after setting the TransformFormat
-										   //mm.InstanceCount = 1000;
-										   //mm.VisibleInstanceCount = -1;
+		this.Multimesh.InstanceCount = 10000;  //need to do this after setting the TransformFormat
+																					 //mm.InstanceCount = 1000;
+																					 //mm.VisibleInstanceCount = -1;
 
 
 		//set initial placement
@@ -115,9 +115,9 @@ public class ProcMultimesh : MultiMeshInstance
 						}
 						var loc = new Vector3((x * seperationDistance), y * seperationDistance, z * seperationDistance);
 						spanXf[i].origin = loc; //loc offset 3 is the position in a transform.  we could assign directly to array like this: //xforms[(i * 4) + 3] = loc;
-						//this.Multimesh.SetInstanceTransform(i, new Transform(Basis.Identity, loc)); //instead of updating 1 at a time, we update all after the loop is done.
+																		//this.Multimesh.SetInstanceTransform(i, new Transform(Basis.Identity, loc)); //instead of updating 1 at a time, we update all after the loop is done.
 						i++;
-						
+
 					}
 				}
 			}
