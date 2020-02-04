@@ -1,20 +1,6 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=2 format=2]
 
 [ext_resource path="res://screens/ProcTest.cs" type="Script" id=1]
-[ext_resource path="res://asset/fish/Fish1.obj" type="ArrayMesh" id=2]
-[ext_resource path="res://asset/fish/fish1.shaderMaterial.tres" type="Material" id=3]
-
-[sub_resource type="MultiMesh" id=1]
-transform_format = 1
-instance_count = 2
-mesh = ExtResource( 2 )
-transform_array = PoolVector3Array( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 
 [node name="ProcTest" type="Spatial"]
 script = ExtResource( 1 )
-
-[node name="MultiMeshInstance" type="MultiMeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0 )
-visible = false
-material_override = ExtResource( 3 )
-multimesh = SubResource( 1 )

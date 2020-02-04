@@ -7,8 +7,7 @@
 [node name="Spatial" type="Spatial"]
 script = ExtResource( 3 )
 
-[node name="MeshInstance2" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0 )
+[node name="MoveTestNode" type="MeshInstance" parent="."]
 material_override = ExtResource( 1 )
 mesh = ExtResource( 5 )
 material/0 = null

@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using godot_csharp_tech.addons;
+using System.Runtime.InteropServices;
 
 [Tool]
 public class ProcTest : Spatial
@@ -43,9 +44,12 @@ public class ProcTest : Spatial
 
 
 
-
 public class ProcMultimesh : MultiMeshInstance
 {
+
+	private Vector3[] xforms;
+	
+	
 	public override void _Ready()
 	{
 		base._Ready();
@@ -74,7 +78,7 @@ public class ProcMultimesh : MultiMeshInstance
 			shadMat.SetShaderParam("texture_albedo", diffuse);
 			this.MaterialOverride = shadMat;
 		}
-		this.Multimesh.InstanceCount = 10000;  //need to do this after setting the TransformFormat
+		this.Multimesh.InstanceCount =  10000;  //need to do this after setting the TransformFormat
 										   //mm.InstanceCount = 1000;
 										   //mm.VisibleInstanceCount = -1;
 
@@ -87,7 +91,10 @@ public class ProcMultimesh : MultiMeshInstance
 		}
 
 		//this vector3 array is actually a transform array (4 vector 3's)
-		var xforms = this.Multimesh.TransformArray;
+		xforms = this.Multimesh.TransformArray;
+		//so lets cast it into that!
+		var spanV3 = new Span<Vector3>(xforms);
+		var spanXf = MemoryMarshal.Cast<Vector3, Transform>(spanV3);
 
 
 		//put all the fish into a grid
@@ -107,8 +114,7 @@ public class ProcMultimesh : MultiMeshInstance
 							break; //need this because of rounding with our dim variable.
 						}
 						var loc = new Vector3((x * seperationDistance), y * seperationDistance, z * seperationDistance);
-						//loc offset 3 is the position in a transform
-						xforms[(i * 4) + 3] = loc;
+						spanXf[i].origin = loc; //loc offset 3 is the position in a transform.  we could assign directly to array like this: //xforms[(i * 4) + 3] = loc;
 						//this.Multimesh.SetInstanceTransform(i, new Transform(Basis.Identity, loc)); //instead of updating 1 at a time, we update all after the loop is done.
 						i++;
 						
@@ -131,14 +137,20 @@ public class ProcMultimesh : MultiMeshInstance
 			visibleCount = this.Multimesh.InstanceCount;
 		}
 
-		var xforms = this.Multimesh.TransformArray;
+		//var xforms = this.Multimesh.TransformArray;  //we don't need to get this again, since our code is the only thing that changes it. 
+		var spanV3 = new Span<Vector3>(xforms);
+		var spanXf = MemoryMarshal.Cast<Vector3, Transform>(spanV3);
 
 		for (var i = 0; i < visibleCount; i++)
 		{
+			//var relXf = new Transform()
+
+
 			var deltaLoc = new Vector3((float)(rand.NextDouble() - 0.5), (float)(rand.NextDouble() - 0.5), (float)(rand.NextDouble() - 0.5)) / 10;
 			var curLoc = xforms[(i * 4) + 3];
 			var newLoc = curLoc + deltaLoc;
-			xforms[(i * 4) + 3] = newLoc;
+			//xforms[(i * 4) + 3] = newLoc;
+			spanXf[i].origin = newLoc;
 			//this.Multimesh.SetInstanceTransform(i, new Transform(Basis.Identity, newLoc));  //instead of updating 1 at a time, we update all after the loop is done.
 		}
 		this.Multimesh.TransformArray = xforms;
