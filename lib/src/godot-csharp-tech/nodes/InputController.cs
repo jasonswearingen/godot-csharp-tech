@@ -1,4 +1,4 @@
-namespace godot_csharp_tech.addons
+namespace godot_csharp_tech.nodes
 {
 	/////////////////////////////////////////
 	///Input Controller, allows for keyboard and mouse inputs
