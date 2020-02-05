@@ -19,11 +19,15 @@ public class MoveTestScene : Spatial
 			{
 				RemoveChild(fish);
 				fish.Dispose();
+				fish = null;
 			}
-			fish = new FishMoveTest();
-			AddChild(fish);
-			fish.Translate(new Vector3(-10, 0, -5));
-			fish.Rotate(Vector3.Up, Mathf.Deg2Rad(45));
+			//if (fish == null)
+			{
+				fish = new FishMoveTest();
+				AddChild(fish);
+				fish.Translate(new Vector3(-10, 0, -5));
+				fish.Rotate(Vector3.Up, Mathf.Deg2Rad(45));
+			}
 		}
 	}
 
@@ -34,7 +38,7 @@ public class MoveTestScene : Spatial
 	public override void _Process(float delta)
 	{
 		totalTime += TimeSpan.FromSeconds(delta);
-		if (totalTime >= TimeSpan.FromSeconds(5))
+		if (totalTime >= TimeSpan.FromSeconds(15))
 		{
 			_Ready();
 		}
@@ -89,14 +93,24 @@ public class FishMoveTest : Spatial
 		var localFwd = Transform.basis.Column2;
 
 
-		Translate(Vector3.Forward * delta);
+		Translate(Vector3.Forward * delta * 10);
 
+		//var targetDiff = GlobalTransform.origin - steerTarget;
+
+		var desiredXform = GlobalTransform.LookingAt(steerTarget, Vector3.Up);
+		GlobalTransform = GlobalTransform.InterpolateWith(desiredXform, 1f * delta);
+
+		//        Transform.Rotated(Vector3.Up)
+
+		//Transform.
+		//Transform.InterpolateWith
 
 		if (loopCount % 100 == 0)
 		{
 			GD.Print($"{loopCount / 100}: localFwd={localFwd.ToString("F2")}");
 		}
 
+		//Transform.InterpolateWith
 
 		//GD.Print("steerTarget", steerTarget);
 

@@ -1,6 +1,6 @@
 using Godot;
 using System;
-using godot_csharp_tech.addons;
+using godot_csharp_tech.nodes;
 
 public class FishTest : Spatial
 {

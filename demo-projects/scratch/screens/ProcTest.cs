@@ -1,6 +1,6 @@
 using Godot;
 using System;
-using godot_csharp_tech.addons;
+using godot_csharp_tech.nodes;
 using System.Runtime.InteropServices;
 
 
@@ -13,7 +13,7 @@ public class ProcTest : Spatial
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-
+		
 		//add perf info label
 		AddChild(new MonoDiagLabel()
 		{

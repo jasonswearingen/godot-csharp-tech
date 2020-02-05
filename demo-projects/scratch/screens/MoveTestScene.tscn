@@ -8,6 +8,8 @@
 script = ExtResource( 1 )
 
 [node name="FishTarget" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 0, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 18, 0 )
 mesh = SubResource( 1 )
 material/0 = null
+
+[node name="Camera" type="Camera" parent="."]
