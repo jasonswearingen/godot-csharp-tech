@@ -10,6 +10,3 @@ script = ExtResource( 3 )
 [node name="MoveTestNode" type="MeshInstance" parent="."]
 material_override = ExtResource( 1 )
 mesh = ExtResource( 5 )
-material/0 = null
-material/1 = null
-material/2 = null

@@ -62,6 +62,9 @@ public class FishMoveTest : Spatial
 		//add a fish via code, put it at (0,3,0)
 		{
 			var mesh = GD.Load<Mesh>("res://asset/fish/Fish1.obj");
+
+			GD.Print($"mesh aabb = {mesh.GetAabb().ToString("F2")}");
+
 			var shader = GD.Load<Shader>("res://asset/fish/fish1.shader");
 			var diffuse = GD.Load<Texture>("res://asset/fish/Fish1-diffuse_base.png");
 			shader.SetDefaultTextureParam("texture_albedo", diffuse);

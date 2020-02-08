@@ -1,0 +1,320 @@
+[gd_scene load_steps=21 format=2]
+
+[sub_resource type="CubeMesh" id=1]
+
+[sub_resource type="CylinderMesh" id=2]
+
+[sub_resource type="PlaneMesh" id=3]
+
+[sub_resource type="PrismMesh" id=4]
+
+[sub_resource type="QuadMesh" id=5]
+
+[sub_resource type="SphereMesh" id=6]
+
+[sub_resource type="CapsuleMesh" id=7]
+
+[sub_resource type="VisualShaderNodeInput" id=12]
+input_name = "screen_texture"
+
+[sub_resource type="VisualShaderNodeInput" id=13]
+output_port_for_preview = 0
+input_name = "screen_uv"
+
+[sub_resource type="VisualShaderNodeTexture" id=14]
+output_port_for_preview = 1
+source = 5
+
+[sub_resource type="VisualShader" id=15]
+code = "shader_type spatial;
+
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+// Input:3
+	vec3 n_out3p0;
+	n_out3p0 = vec3(SCREEN_UV,0.0);
+
+// Input:2
+
+// Texture:4
+	vec3 n_out4p0;
+	float n_out4p1;
+	{
+		vec4 SCREEN_TEXTURE_tex_read = texture( SCREEN_TEXTURE , n_out3p0.xy );
+		n_out4p0 = SCREEN_TEXTURE_tex_read.rgb;
+		n_out4p1 = SCREEN_TEXTURE_tex_read.a;
+	}
+
+// Output:0
+	ALBEDO = n_out4p0;
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+graph_offset = Vector2( -41.3, -645 )
+nodes/fragment/0/position = Vector2( 1264, -247 )
+nodes/fragment/2/node = SubResource( 12 )
+nodes/fragment/2/position = Vector2( 52.1, -154.1 )
+nodes/fragment/3/node = SubResource( 13 )
+nodes/fragment/3/position = Vector2( 57, -345 )
+nodes/fragment/4/node = SubResource( 14 )
+nodes/fragment/4/position = Vector2( 575, -345 )
+nodes/fragment/connections = PoolIntArray( 3, 0, 4, 0, 4, 0, 0, 0, 2, 0, 4, 2 )
+
+[sub_resource type="ShaderMaterial" id=16]
+shader = SubResource( 15 )
+
+[sub_resource type="CubeMesh" id=10]
+
+[sub_resource type="Shader" id=11]
+code = "shader_type spatial;
+render_mode
+blend_mix
+//,depth_draw_alpha_prepass
+//,depth_draw_always
+;
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+	//passes on screen texture.  you can \"see\" it because it's still being shaded.  (turn render mode unshaded on to not see light shading)
+	ALBEDO = texture(SCREEN_TEXTURE,SCREEN_UV).rgb;
+}
+
+void light() {
+// Output:0
+
+}
+"
+
+[sub_resource type="ShaderMaterial" id=17]
+shader = SubResource( 11 )
+
+[sub_resource type="Shader" id=8]
+code = "shader_type spatial;
+render_mode 
+//blend_mix
+//blend_sub,
+cull_back
+
+//blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx
+//,skip_vertex_transform
+,shadows_disabled
+,unshaded
+//,depth_draw_always
+//,depth_draw_alpha_prepass
+;
+
+
+void vertex() {
+// Output:0
+
+}
+
+void fragment() {
+// Input:3
+	vec3 n_out3p0;
+	n_out3p0 = vec3(SCREEN_UV,0.0);
+
+// Input:2
+
+// Texture:4
+	vec3 n_out4p0;
+	float n_out4p1;
+	{
+		vec4 SCREEN_TEXTURE_tex_read = texture( SCREEN_TEXTURE , n_out3p0.xy );
+		n_out4p0 = SCREEN_TEXTURE_tex_read.rgb;
+		n_out4p1 = SCREEN_TEXTURE_tex_read.a;
+	}
+
+// Output:0
+	ALBEDO = n_out4p0;
+	
+	ALBEDO = texture(SCREEN_TEXTURE,SCREEN_UV).ggg;
+	ALBEDO = texture(DEPTH_TEXTURE,UV).rrr;
+	//ALBEDO = ALBEDO * ALBEDO * 0.5;
+
+    float depth = textureLod(DEPTH_TEXTURE, SCREEN_UV, 0.0).r;
+    vec4 upos = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec3 pixel_position = upos.xyz / upos.w;
+	
+	ALBEDO = upos.rgb;
+	ALBEDO = pixel_position;
+	ALBEDO = vec3(depth);
+	
+	ALBEDO = upos.www;
+}
+
+void light() {
+// Output:0
+
+}
+"
+
+[sub_resource type="ShaderMaterial" id=9]
+shader = SubResource( 8 )
+
+[sub_resource type="Shader" id=18]
+code = "shader_type spatial;
+render_mode
+blend_mix
+//,depth_draw_alpha_prepass
+//,depth_draw_always
+//,depth_draw_opaque
+//,depth_test_disable
+,unshaded
+;
+
+varying flat vec3 _normal;
+varying flat vec3 _tangent;
+varying flat vec3 _vertex;
+varying flat vec3 _binromal;
+varying flat vec4 _color;
+varying flat vec2 _uv;
+
+
+varying  vec3 s_normal;
+varying  vec3 s_tangent;
+varying  vec3 s_vertex;
+varying  vec3 s_binromal;
+varying  vec4 s_color;
+varying  vec2 s_uv;
+void vertex() {
+// Output:0
+_normal = NORMAL;
+_tangent = TANGENT;
+_vertex = VERTEX;
+_binromal = BINORMAL;
+_uv = UV;
+_color = COLOR;
+
+s_normal = NORMAL;
+s_tangent = TANGENT;
+s_vertex = VERTEX;
+s_binromal = BINORMAL;
+s_uv = UV;
+s_color = COLOR;
+
+}
+
+void fragment() {
+	
+
+
+//if(_normal == s_normal){
+//	ALBEDO = vec3(0);
+//}
+
+//ALBEDO = abs(s_vertex);
+//ALBEDO = _vertex;
+
+////////  kind of works on corners, for cylinder
+//if(length(abs(s_vertex - _vertex))<0.1){
+//	ALBEDO = vec3(0);
+//}else{
+//	ALPHA=0.0;
+//}
+
+//	//doesn't varry enough
+//	ALBEDO = abs(_normal);
+//	ALBEDO = abs(s_normal);
+//ALBEDO = abs(_tangent);
+//	ALBEDO = _binromal;
+//	ALBEDO = s_binromal;
+
+//ALBEDO = _uv.yyy;
+//ALBEDO = _color;
+ALBEDO = abs(POINT_COORD.yyy);
+
+
+}
+
+void light() {
+// Output:0
+
+}
+"
+
+[sub_resource type="ShaderMaterial" id=19]
+shader = SubResource( 18 )
+
+[sub_resource type="PrismMesh" id=20]
+
+[node name="Spatial" type="Spatial"]
+
+[node name="Dummy_Objects" type="Spatial" parent="."]
+
+[node name="MeshInstance" type="MeshInstance" parent="Dummy_Objects"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 0 )
+mesh = SubResource( 1 )
+material/0 = null
+
+[node name="MeshInstance3" type="MeshInstance" parent="Dummy_Objects"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, -4 )
+mesh = SubResource( 2 )
+material/0 = null
+
+[node name="MeshInstance4" type="MeshInstance" parent="Dummy_Objects"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6, 3 )
+mesh = SubResource( 3 )
+material/0 = null
+
+[node name="MeshInstance5" type="MeshInstance" parent="Dummy_Objects"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -6, 3 )
+mesh = SubResource( 4 )
+material/0 = null
+
+[node name="MeshInstance6" type="MeshInstance" parent="Dummy_Objects"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -6, -3 )
+mesh = SubResource( 5 )
+material/0 = null
+
+[node name="MeshInstance7" type="MeshInstance" parent="Dummy_Objects"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2, -6, -1 )
+mesh = SubResource( 6 )
+material/0 = null
+
+[node name="MeshInstance2" type="MeshInstance" parent="Dummy_Objects"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 5 )
+mesh = SubResource( 7 )
+material/0 = null
+
+[node name="CompleteExamples" type="Node" parent="."]
+
+[node name="VisualShader_ScreenTexture" type="MeshInstance" parent="CompleteExamples"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 3, 9 )
+material_override = SubResource( 16 )
+mesh = SubResource( 10 )
+material/0 = null
+
+[node name="ScreenSample" type="MeshInstance" parent="CompleteExamples"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 3, -4 )
+material_override = SubResource( 17 )
+mesh = SubResource( 10 )
+material/0 = null
+
+[node name="DepthShader" type="MeshInstance" parent="CompleteExamples"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 3, -9 )
+material_override = SubResource( 9 )
+mesh = SubResource( 10 )
+material/0 = null
+
+[node name="ShadingTest" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0 )
+material_override = SubResource( 19 )
+mesh = SubResource( 20 )
+material/0 = null
