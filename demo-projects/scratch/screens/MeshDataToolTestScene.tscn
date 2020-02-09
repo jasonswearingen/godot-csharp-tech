@@ -1,13 +1,18 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://screens/MeshDataToolTestScene.cs" type="Script" id=1]
-[ext_resource path="res://asset/fish/Fish1.obj" type="ArrayMesh" id=2]
+[ext_resource path="res://asset/test/teapot.obj" type="ArrayMesh" id=2]
+[ext_resource path="res://asset/fish/Fish1-diffuse_base.png" type="Texture" id=3]
+[ext_resource path="res://asset/test/sibnek.obj" type="ArrayMesh" id=4]
 
 [sub_resource type="Shader" id=1]
 code = "shader_type spatial;
-//render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
-//uniform vec4 albedo : hint_color;
-//uniform sampler2D texture_albedo : hint_albedo;
+render_mode blend_mix
+//,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx
+,unshaded
+;
+uniform vec4 albedo : hint_color;
+uniform sampler2D texture_albedo : hint_albedo;
 //uniform float specular;
 //uniform float metallic;
 //uniform float roughness : hint_range(0,1);
@@ -28,36 +33,117 @@ code = "shader_type spatial;
 
 
 void fragment() {
-//	vec2 base_uv = UV;
-//	vec4 albedo_tex = texture(texture_albedo,base_uv);
+	vec2 base_uv = UV;
+	vec4 albedo_tex = texture(texture_albedo,base_uv);
 //	ALBEDO = albedo.rgb * albedo_tex.rgb;
 	
-	float threshhold = 0.1;
+	float threshhold = 0.01;
 	
-	if(COLOR.x < 0.01 || COLOR.y < 0.01 || COLOR.z < 0.01) {
-		ALBEDO = vec3(0.0, 0.0, 0.0);
+	if(COLOR.x < threshhold || COLOR.y < threshhold || COLOR.z < threshhold) {
+//		if(length(COLOR.xy)<threshhold || length(COLOR.xz)<threshhold || length(COLOR.yz)<threshhold){
+//			ALBEDO = vec3(0.0, 0.0, 0.0);		
+//		}else{
+//			ALBEDO = COLOR.rgb/10.0;	
+//		//ALBEDO = COLOR.rgb;
+//		}
+
+			ALBEDO = vec3(0.0, 0.0, 0.0);
+			
+	
+		//ALPHA=0.5;
+		//ALBEDO = COLOR.rgb;
+		
 	} else {
-		ALBEDO = vec3(0.5, 0.5, 0.5);
+		//ALBEDO = vec3(0.5, 0.5, 0.5);
+		ALBEDO = COLOR.rgb;
+		//ALBEDO = albedo.rgb * albedo_tex.rgb;
 	}
+	if(COLOR.a < threshhold){
+		ALBEDO = vec3(0.0, 0.0, 0.0);
+	}else{
+		ALBEDO = COLOR.rgb;
+	}
+	
+	//RGBA BARYCENTRIC CODE HERE
+	if(COLOR.a==0.0 && (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)) {
+		ALBEDO = vec3(0.0, 0.0, 0.0);
+		//ALBEDO = COLOR.rgb;
+	}else if(COLOR.b==0.0 && (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.a < threshhold)) {
+		ALBEDO = vec3(0.0, 0.0, 0.0);
+	}else if(COLOR.g==0.0 && (COLOR.r < threshhold || COLOR.a < threshhold || COLOR.b < threshhold)) {
+		ALBEDO = vec3(0.0, 0.0, 0.0);
+		//ALBEDO = COLOR.rgb;	
+	}else if(COLOR.r==0.0 && (COLOR.a < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)) {
+		ALBEDO = vec3(0.0, 0.0, 0.0);
+		//ALBEDO = COLOR.rgb;
+	}else {		
+		ALBEDO = COLOR.rgb;
+		//ALBEDO = vec3(0.5, 0.5, 0.5);
+	}
+	
+	//NORMAL RGB BARYCENTRIC CODE HERE:
+	if( (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)){
+		ALBEDO = vec3(0.0, 0.0, 0.0);
+	}else{
+		ALBEDO = COLOR.rgb;
+	}
+	
+	//if(ALBEDO == vec3(0.0, 0.0, 0.0))
+//	if(COLOR.a > threshhold){ //} (1.0-threshhold)){
+//		ALBEDO = COLOR.rgb;
+//	}
 //	if(COLOR.x > (1.0-threshhold) || COLOR.y > (1.0-threshhold) || COLOR.z > (1.0-threshhold)) {
 //		ALBEDO = vec3(0.0, 0.0, 0.0);
 //	} else {
 //		ALBEDO = vec3(0.5, 0.5, 0.5);
 //	}
 	
-	ALBEDO = COLOR.rgb;
+	//ALBEDO = COLOR.rgb;
 }
 "
 
 [sub_resource type="ShaderMaterial" id=2]
 shader = SubResource( 1 )
+shader_param/albedo = Color( 1, 1, 1, 1 )
+shader_param/texture_albedo = ExtResource( 3 )
 
 [node name="Spatial" type="Spatial"]
 script = ExtResource( 1 )
 
-[node name="Test" type="MeshInstance" parent="."]
+[node name="Input" type="MeshInstance" parent="."]
+visible = false
+mesh = ExtResource( 4 )
+material/0 = null
+material/1 = null
+material/2 = null
+material/3 = null
+material/4 = null
+material/5 = null
+material/6 = null
+material/7 = null
+material/8 = null
+material/9 = null
+material/10 = null
+material/11 = null
+material/12 = null
+material/13 = null
+material/14 = null
+material/15 = null
+material/16 = null
+material/17 = null
+material/18 = null
+material/19 = null
+material/20 = null
+material/21 = null
+material/22 = null
+material/23 = null
+material/24 = null
+material/25 = null
+
+[node name="Output" type="MeshInstance" parent="."]
 material_override = SubResource( 2 )
 mesh = ExtResource( 2 )
+material/0 = null
 
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, 9, 0, 5.1378 )
