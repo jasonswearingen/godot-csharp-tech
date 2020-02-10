@@ -1,7 +1,6 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://screens/MeshDataToolTestScene.cs" type="Script" id=1]
-[ext_resource path="res://asset/test/teapot.obj" type="ArrayMesh" id=2]
 [ext_resource path="res://asset/fish/Fish1-diffuse_base.png" type="Texture" id=3]
 [ext_resource path="res://asset/test/sibnek.obj" type="ArrayMesh" id=4]
 
@@ -30,7 +29,41 @@ uniform sampler2D texture_albedo : hint_albedo;
 //	vbc = COLOR;
 //}
 
+float get_edge(vec3 color) {
+    vec3 deriv = fwidth(color);
+    float width = 1.0;
+    vec3 threshold = step(deriv * width, color);
+    return 1.0 - min(min(threshold.x, threshold.y), threshold.z);
+}
 
+vec3 getBaryCoords(vec4 color){
+	if(color.a==0.0){
+		return color.rgb;
+	}else if(color.b==0.0){
+		return color.rga;
+	}else if(color.g==0.0){
+		return color.rba;
+	}else if(color.r==0.0){
+		return color.gba;
+	}else{
+		//white in use
+		
+		
+		
+		vec4 tc = round(color * 100.0);
+		//vertx white
+		if(tc == vec4(10.0)){
+			return vec3(1,1,0);
+		}
+				
+		if(tc.r != tc.g  && tc.g == tc.b && tc.b == tc.a){
+			//return color.aaa;
+			return vec3(0);
+		}
+		return color.rgb;
+		
+	}
+}
 
 void fragment() {
 	vec2 base_uv = UV;
@@ -64,29 +97,24 @@ void fragment() {
 		ALBEDO = COLOR.rgb;
 	}
 	
-	//RGBA BARYCENTRIC CODE HERE
-	if(COLOR.a==0.0 && (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)) {
-		ALBEDO = vec3(0.0, 0.0, 0.0);
-		//ALBEDO = COLOR.rgb;
-	}else if(COLOR.b==0.0 && (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.a < threshhold)) {
-		ALBEDO = vec3(0.0, 0.0, 0.0);
-	}else if(COLOR.g==0.0 && (COLOR.r < threshhold || COLOR.a < threshhold || COLOR.b < threshhold)) {
-		ALBEDO = vec3(0.0, 0.0, 0.0);
-		//ALBEDO = COLOR.rgb;	
-	}else if(COLOR.r==0.0 && (COLOR.a < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)) {
-		ALBEDO = vec3(0.0, 0.0, 0.0);
-		//ALBEDO = COLOR.rgb;
-	}else {		
-		ALBEDO = COLOR.rgb;
-		//ALBEDO = vec3(0.5, 0.5, 0.5);
-	}
 	
-	//NORMAL RGB BARYCENTRIC CODE HERE:
-	if( (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)){
+	vec3 bc = getBaryCoords(COLOR);
+	if( (bc.r < threshhold || bc.g < threshhold || bc.b < threshhold)){
 		ALBEDO = vec3(0.0, 0.0, 0.0);
 	}else{
 		ALBEDO = COLOR.rgb;
-	}
+	}	
+	
+//	//NORMAL RGB BARYCENTRIC CODE HERE:
+//	if( (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)){
+//		ALBEDO = vec3(0.0, 0.0, 0.0);
+//	}else{
+//		ALBEDO = COLOR.rgb;
+//	}
+//
+	//cyberreality shader code:
+	vec3 color = vec3(0.0);
+    //ALBEDO = max(vec3(get_edge(COLOR.rgb)), color);
 	
 	//if(ALBEDO == vec3(0.0, 0.0, 0.0))
 //	if(COLOR.a > threshhold){ //} (1.0-threshhold)){
@@ -142,8 +170,33 @@ material/25 = null
 
 [node name="Output" type="MeshInstance" parent="."]
 material_override = SubResource( 2 )
-mesh = ExtResource( 2 )
+mesh = ExtResource( 4 )
 material/0 = null
+material/1 = null
+material/2 = null
+material/3 = null
+material/4 = null
+material/5 = null
+material/6 = null
+material/7 = null
+material/8 = null
+material/9 = null
+material/10 = null
+material/11 = null
+material/12 = null
+material/13 = null
+material/14 = null
+material/15 = null
+material/16 = null
+material/17 = null
+material/18 = null
+material/19 = null
+material/20 = null
+material/21 = null
+material/22 = null
+material/23 = null
+material/24 = null
+material/25 = null
 
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( 0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, 9, 0, 5.1378 )
+transform = Transform( 0.5, 0, 0.866025, 0, 1, 0, -0.866025, 0, 0.5, 11, 5, 4.1378 )

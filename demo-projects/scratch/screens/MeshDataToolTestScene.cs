@@ -98,14 +98,14 @@ public class MeshDataToolTestScene : Spatial
 public class BarycentricProcessor
 {
 
-	[Flags]
-	public enum VERTCOLOR
-	{
-		NONE = 0,
-		Red = 1,
-		Green = 2,
-		Blue = 4,
-	}
+	//[Flags]
+	//public enum VERTCOLOR
+	//{
+	//	NONE = 0,
+	//	Red = 1,
+	//	Green = 2,
+	//	Blue = 4,
+	//}
 
 	public class VertexInfo : IComparable<VertexInfo>
 	{
@@ -124,7 +124,11 @@ public class BarycentricProcessor
 
 		public VertexInfo[] storage;
 
-		//public int adjadj;
+		/// <summary>
+		/// number of adjacent adjacent verticies (2nd degree verts).  aprox network density.
+		/// used as additional heuristic when sorting, gives aprox 5% improvement on sibnek 100k vert test model.
+		/// </summary>
+		public int adjadj;
 
 		public MeshDataTool mdt;
 		public VertexInfo(int idx, MeshDataTool mdt, VertexInfo[] storage)
@@ -146,17 +150,17 @@ public class BarycentricProcessor
 				adjacentVerticies[i] = adjacent;
 			}
 
-			////better heuristic for sorting (vert with most adjcent faces)
-			//foreach (var faceIdx in faces)
-			//{
-			//	//adjadj++;
-			//	for (var i = 0; i < 3; i++)
-			//	{
-			//		var faceVertIdx = mdt.GetFaceVertex(faceIdx, i);
-			//		adjadj += mdt.GetVertexFaces(faceVertIdx).Length;
-			//	}
+			//better heuristic for sorting (vert with most adjcent faces)
+			foreach (var faceIdx in faces)
+			{
+				//adjadj++;
+				for (var i = 0; i < 3; i++)
+				{
+					var faceVertIdx = mdt.GetFaceVertex(faceIdx, i);
+					adjadj += mdt.GetVertexFaces(faceVertIdx).Length;
+				}
 
-			//}
+			}
 		}
 
 		public IEnumerable<VertexInfo> GetAdjacentVertInfo()
@@ -175,55 +179,7 @@ public class BarycentricProcessor
 		public int CompareTo(VertexInfo other)
 		{
 			//lowest first
-			return (adjacentVerticies.Length - other.adjacentVerticies.Length);// * 100000 + (adjadj - other.adjadj);
-		}
-
-		public VERTCOLOR GetUsedAdjacentColors()
-		{
-			//use a flags enumeration to store used colors
-			var usedColors = VERTCOLOR.NONE;
-			foreach (var adjIdx in adjacentVerticies)
-			{
-				var adjColor = GetVertColor(adjIdx, mdt);
-				if ((usedColors & adjColor) != 0)
-				{
-					throw new Exception($"color {adjColor} already found in adjacents: {usedColors}");
-				}
-				usedColors |= adjColor;
-			}
-
-			return usedColors;
-		}
-
-		public void SetAvailableColor()
-		{
-			//get colors used by adjacents
-			var usedAdjColors = GetUsedAdjacentColors();
-
-			//get available color
-			VERTCOLOR colorToUse = VERTCOLOR.NONE;
-			foreach (VERTCOLOR maybeColor in Enum.GetValues(typeof(VERTCOLOR)))
-			{
-				switch (maybeColor)
-				{
-					case VERTCOLOR.NONE:
-						break;
-					default:
-						if ((usedAdjColors & maybeColor) == 0)
-						{
-							//color is free
-							colorToUse = maybeColor;
-						}
-						break;
-				}
-				if (colorToUse != VERTCOLOR.NONE)
-				{
-					break;
-				}
-			}
-			SetVertColor(vertIdx, mdt, colorToUse);
-
-
+			return (adjacentVerticies.Length - other.adjacentVerticies.Length) * 100000 + (adjadj - other.adjadj);
 		}
 
 		/// <summary>
@@ -263,47 +219,6 @@ public class BarycentricProcessor
 
 
 
-		static VERTCOLOR GetVertColor(int vertIdx, MeshDataTool mdt)
-		{
-			var color = mdt.GetVertexColor(vertIdx);
-			switch (color)
-			{
-				case Color c when c == Colors.Red:
-					return VERTCOLOR.Red;
-
-				case Color c when c == Colors.Green:
-					return VERTCOLOR.Green;
-
-				case Color c when c == Colors.Blue:
-					return VERTCOLOR.Blue;
-				default:
-					return VERTCOLOR.NONE;
-
-			}
-		}
-		static void SetVertColor(int vertIdx, MeshDataTool mdt, VERTCOLOR color)
-		{
-			Color c;
-			switch (color)
-			{
-				case VERTCOLOR.Red:
-					c = Colors.Red;
-					break;
-				case VERTCOLOR.Green:
-					c = Colors.Green;
-					break;
-				case VERTCOLOR.Blue:
-					c = Colors.Blue;
-					break;
-				//case VERTCOLOR.NONE:
-				//	c = Colors.Black;
-				//	break;
-				default:
-					throw new Exception($"unexpected setting vert color {color}  vertIdx={vertIdx}.  are you passing a single value or a flags union?");
-
-			}
-			mdt.SetVertexColor(vertIdx, c);
-		}
 
 	}
 
@@ -325,21 +240,32 @@ public class BarycentricProcessor
 		//sort verticies by degree (number of edges).   defaults to highest first
 		var sortedVerts = new List<VertexInfo>(vertStorage);
 		sortedVerts.Sort();
-		//verts.CopyTo(sortedVerts,0);
-		//Array.Sort(sortedVerts);
 
-		var colorChoices = new Color[] { new Color(1, 0, 0, 0), new Color(0, 1, 0, 0), new Color(0, 0, 1, 0), new Color(0, 0, 0, 1) };
+		//color channels used for verticies.  3 is ideal, but aprox 10% of verts wont be colored.   
+		var colorChoices = new Color[] { 
+			new Color(1, 0, 0, 0), new Color(0, 1, 0, 0), new Color(0, 0, 1, 0), 
+			//adding a 4th color channel reduces our non-colored by 95%  (99.92% coverage on sibnek 100k vert test model), but makes the shader more complex
+			new Color(0, 0, 0, 1) 
+		};
 
+
+		//////////////  various algorithm choices.   best is _WELSH_POWELL_ADJUSTED
 		//_GREEDY_FACE(sortedVerts, colorChoices, mdt);
 		//_GREEDY_BASIC(sortedVerts, colorChoices, mdt);
 		//_CYBERREALITY(sortedVerts, colorChoices, mdt);
-		_CYBERREALITY_EDIT(sortedVerts, colorChoices, mdt);
-		//_WELSH_POWELL_ADJUSTED(sortedVerts, colorChoices, mdt);
+		//_CYBERREALITY_EDIT(sortedVerts, colorChoices, mdt);
+		_WELSH_POWELL_ADJUSTED(sortedVerts, colorChoices, mdt);
 
 	}
 
 
-
+	/// <summary>
+	/// my edited version of Cyberality's technique.   
+	/// faster performance, about as good coverage as "greedy" algo.
+	/// </summary>
+	/// <param name="sortedVerts"></param>
+	/// <param name="_colorChoices"></param>
+	/// <param name="mdt"></param>
 	private static void _CYBERREALITY_EDIT(List<VertexInfo> sortedVerts, Color[] _colorChoices, MeshDataTool mdt)
 	{
 		var done = new Dictionary<int, bool>();//vertidx/isDone
@@ -410,7 +336,7 @@ public class BarycentricProcessor
 					if (colorChoices.Count > 0)
 					{
 						var next = colorChoices[0]; colorChoices.RemoveAt(0);
-						vertColorStorage[vertIdx] = next;// + removal;
+						vertColorStorage[vertIdx] = next + removal;
 					}
 					//JASON CLEANUP:  this else will never trigger, as there are only 3 verticies
 					else
@@ -441,6 +367,12 @@ public class BarycentricProcessor
 
 	}
 
+	/// <summary>
+	/// cyberality's technique.  needs some optimization for use with big meshes.
+	/// </summary>
+	/// <param name="sortedVerts"></param>
+	/// <param name="colorChoices"></param>
+	/// <param name="mdt"></param>
 	private static void _CYBERREALITY(List<VertexInfo> sortedVerts, Color[] colorChoices, MeshDataTool mdt)
 	{
 		var done = new Dictionary<int, bool>();//vertidx/isDone
@@ -534,7 +466,12 @@ public class BarycentricProcessor
 
 	}
 
-
+	/// <summary>
+	/// experimental greedy mesh technique.
+	/// </summary>
+	/// <param name="sortedVerts"></param>
+	/// <param name="colorChoices"></param>
+	/// <param name="mdt"></param>
 	private static void _GREEDY_FACE(List<VertexInfo> sortedVerts, Color[] colorChoices, MeshDataTool mdt)
 	{
 		List<VertexInfo> noColor = new List<VertexInfo>();
@@ -595,7 +532,12 @@ public class BarycentricProcessor
 
 
 
-
+	/// <summary>
+	/// experimental greedy mesh technique.
+	/// </summary>
+	/// <param name="sortedVerts"></param>
+	/// <param name="colorChoices"></param>
+	/// <param name="mdt"></param>
 	private static void _GREEDY_BASIC(List<VertexInfo> sortedVerts, Color[] colorChoices, MeshDataTool mdt)
 	{
 
@@ -674,6 +616,12 @@ public class BarycentricProcessor
 		GD.Print($"_GREEDY_BASIC uncolored count={problems.Count} / {mdt.GetVertexCount()}");
 	}
 
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="sortedVerts"></param>
+	/// <param name="colorChoices"></param>
+	/// <param name="mdt"></param>
 	private static void _WELSH_POWELL_ADJUSTED(List<VertexInfo> sortedVerts, Color[] colorChoices, MeshDataTool mdt)
 	{
 		for (var h = 0; h < colorChoices.Length; h++)
@@ -698,40 +646,13 @@ public class BarycentricProcessor
 				{
 					sortedVerts.RemoveAt(i);
 
-					////make all verts at the same position the same color
-					//foreach(var otherVert in vertStorage)
-					//{
-					//	if(otherVert.pos == vertInfo.pos)
-					//	{
-					//		otherVert.TrySetAvailableColor(color, true);
-					//	}
-					//}
-
-
-
 					//preemptively try to set adjacent and adjadj with related colors
 					foreach (var adj0Vert in vertInfo.GetAdjacentVertInfo())
 					{
-						//if (h < colorChoices.Length - 2 
-						//	&& adj0Vert.adjacentVerticies.Length >=3
-						//	//&& adj0Vert.adjacentVerticies.Length >= vertInfo.adjacentVerticies.Length
-						//	)
-						//{
-						//	adj0Vert.TrySetAvailableColor(colorChoices[h + 1]);
-						//}
-						//if (h < colorChoices.Length - 3
-						//	&& adj0Vert.adjacentVerticies.Length >= 3
-						//	//&& adj0Vert.adjacentVerticies.Length >= vertInfo.adjacentVerticies.Length
-						//	)
-						//{
-						//	adj0Vert.TrySetAvailableColor(colorChoices[h + 2]);
-						//}
-
-
+						//JASON OPTIMIZATION: reduces non-colored by aprox 8% on sibnek 100k vert mesh.
 						foreach (var adj1Vert in adj0Vert.GetAdjacentVertInfo())
 						{
-							if (adj1Vert.adjacentVerticies.Length > vertInfo.adjacentVerticies.Length * 0.75)//vertInfo.adjacentVerticies.Length)
-																											 //if (adj1Vert.adjacentVerticies.Length >= vertInfo.adjacentVerticies.Length)
+							if (adj1Vert.adjacentVerticies.Length > vertInfo.adjacentVerticies.Length * 0.75)
 							{
 								adj1Vert.TrySetAvailableColor(color);
 							}
@@ -745,7 +666,7 @@ public class BarycentricProcessor
 		GD.Print($"ERROR!  Verticies uncolored.  count={sortedVerts.Count} / {mdt.GetVertexCount()}");
 
 		//for any remaining verticies color alpha
-		//var alphaBlack = new Color(0, 0, 0, 0);
+		var alphaBlack = new Color(0, 0, 0, 0);
 		for (int i = sortedVerts.Count - 1; i >= 0; i--)
 		{
 			var vertInfo = sortedVerts[i];
