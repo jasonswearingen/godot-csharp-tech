@@ -8,6 +8,8 @@
 code = "shader_type spatial;
 render_mode blend_mix
 //,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx
+,depth_draw_alpha_prepass //needed if drawing alpha
+,cull_disabled
 ,unshaded
 ;
 uniform vec4 albedo : hint_color;
@@ -21,13 +23,24 @@ uniform sampler2D texture_albedo : hint_albedo;
 //uniform vec3 uv2_scale;
 //uniform vec3 uv2_offset;
 
-//
-//varying vec4 vbc;
-//
-//void vertex() {
-//	UV=UV*uv1_scale.xy+uv1_offset.xy;
-//	vbc = COLOR;
+
+
+
+vec3 getScreenCoord(vec3 vertex, mat4 modelView_Matrix, mat4 proj_Matrix){	
+	//get screen coords of vertex.   Z is depth (1 = far, 0 = close)
+//can manually set the screenspace coords by setting POSITION = getScreenCoord(VERTEX,MODELVIEW_MATRIX,PROJECTION_MATRIX);
+	vec4 vert = vec4(vertex, 1.0);
+	vert = modelView_Matrix * vert;
+	vert = proj_Matrix * vert;
+	return vert.xyz;
+}
+
+//float getDist(vec3 ver mat4 modelView_Matrix, mat4 proj_Matrix){
+//	//get distance from camera.  1=front  0 = back
+//	mat4 result =  modelView_Matrix * proj_Matrix * 1.0;
+//	return result.x;
 //}
+
 
 float get_edge(vec3 color) {
     vec3 deriv = fwidth(color);
@@ -35,8 +48,83 @@ float get_edge(vec3 color) {
     vec3 threshold = step(deriv * width, color);
     return 1.0 - min(min(threshold.x, threshold.y), threshold.z);
 }
+vec3 makeBC(vec2 xy){	
+	//construct a barrycentric z coord from two of it's components.
+	//with barycentric coords we can reconstruct the 3rd axis if we know two.
+	return vec3(xy.xy,1.0  - (xy.x+xy.y));
+}
 
-vec3 getBaryCoords(vec4 color){
+float add4(vec4 vec){
+	return vec.x+vec.y+vec.z+vec.w;
+}
+float add3(vec3 vec){
+	return vec.x+vec.y+vec.z;
+}
+float add2(vec2 vec){
+	return vec.x+vec.y;
+}
+float sub4(vec4 vec){
+	return vec.x-vec.y-vec.z-vec.w;
+}
+float sub3(vec3 vec){
+	return vec.x-vec.y-vec.z;
+}
+float sub2(vec2 vec){
+	return vec.x-vec.y;
+}
+
+bool eq(float val1, float val2, float threshhold){			
+	return abs(val1 - val2)<threshhold;	
+//	//don't use the following because that causes pixelation
+//	vec2 temp = round(vec * (1.0/threshhold));
+//	return temp.x==temp.y;
+}
+bool eq2(vec2 vec, float threshhold){			
+	return abs(sub2(vec))<threshhold;	
+//	//don't use the following because that causes pixelation
+//	vec2 temp = round(vec * (1.0/threshhold));
+//	return temp.x==temp.y;
+}
+bool eq3(vec3 vec, float threshhold){			
+	return (abs(sub2(vec.xy))<threshhold) && (abs(sub2(vec.xz))<threshhold)&& (abs(sub2(vec.yz))<threshhold);		
+}
+float min3(vec3 vec){
+	return min(min(vec.x,vec.y),vec.z);
+}
+float min2(vec2 vec){
+	return min(vec.x,vec.y);
+}
+
+
+vec3 getBaryCoords(vec4 color, float threshhold){
+	//works with 5 color channels:  R,G,B,A, and alphaBlack/Transparent (0,0,0,0)
+	
+	
+	if(add4(color) < (1.0-threshhold)){		
+		//alphaBlack used for on of the verts.  
+		//we detect this by summing all channels.  should equal 1 if 3 of the 4 normal channels (RGBA) are used.  if alphaBlack is used it will be aprox equal to 2/3.
+		
+		
+		//fortunately, with barycentric coords we can reconstruct the 3rd axis if we know two.   so need to find which two normal channels are used and reconstruct the 3rd from them.
+		if(add2(color.rg) ==0.0){			
+			return makeBC(color.ba);
+		}else if(color.g + color.b ==0.0){
+			return makeBC(color.ar);
+		}else if(color.b + color.a ==0.0){
+			return makeBC(color.rg);
+		}else if(color.a + color.r ==0.0){
+			return makeBC(color.gb);
+		}else if(color.r + color.b ==0.0){
+			return makeBC(color.ga);
+		}else if(color.g + color.a ==0.0){
+			return makeBC(color.br);
+		}
+		//unknown (should never get here)
+		//return vec3(1);
+		return vec3(0);
+	}
+	
+	//three of the 4 \"normal\" color chanels is used.  R,G,B,A.  need to find which 3 of the 4
 	if(color.a==0.0){
 		return color.rgb;
 	}else if(color.b==0.0){
@@ -45,24 +133,34 @@ vec3 getBaryCoords(vec4 color){
 		return color.rba;
 	}else if(color.r==0.0){
 		return color.gba;
-	}else{
-		//white in use
-		
-		
-		
-		vec4 tc = round(color * 100.0);
-		//vertx white
-		if(tc == vec4(10.0)){
-			return vec3(1,1,0);
-		}
-				
-		if(tc.r != tc.g  && tc.g == tc.b && tc.b == tc.a){
-			//return color.aaa;
-			return vec3(0);
-		}
-		return color.rgb;
-		
 	}
+	
+	//should never get here
+	//return vec3(1);
+		return vec3(0);
+}
+
+
+//varying vec3 vbc;
+//
+
+varying vec3 vertexScreenCoord;
+void vertex() {
+	//UV=UV*uv1_scale.xy+uv1_offset.xy;
+	//vbc = getBaryCoords(COLOR,0.0);
+	vertexScreenCoord = getScreenCoord(VERTEX,MODELVIEW_MATRIX, PROJECTION_MATRIX);
+}
+
+
+float aaStep(float a, float b){
+	//smoothly interpolates step.
+	float afwidth = fwidth(b) * 0.5;
+	return smoothstep(a - afwidth, a + afwidth, b);
+}
+vec3 aaStep3(vec3  a, vec3 b){
+	//smoothly interpolates step.
+	vec3 afwidth = fwidth(b) * 0.5;
+	return smoothstep(a - afwidth, a + afwidth, b);
 }
 
 void fragment() {
@@ -70,63 +168,86 @@ void fragment() {
 	vec4 albedo_tex = texture(texture_albedo,base_uv);
 //	ALBEDO = albedo.rgb * albedo_tex.rgb;
 	
-	float threshhold = 0.01;
-	
-	if(COLOR.x < threshhold || COLOR.y < threshhold || COLOR.z < threshhold) {
-//		if(length(COLOR.xy)<threshhold || length(COLOR.xz)<threshhold || length(COLOR.yz)<threshhold){
-//			ALBEDO = vec3(0.0, 0.0, 0.0);		
-//		}else{
-//			ALBEDO = COLOR.rgb/10.0;	
-//		//ALBEDO = COLOR.rgb;
-//		}
-
-			ALBEDO = vec3(0.0, 0.0, 0.0);
-			
-	
-		//ALPHA=0.5;
-		//ALBEDO = COLOR.rgb;
+	float threshhold = 0.01;	
+	float lineWidth = 10.0;
+	float dist = 1.0/vertexScreenCoord.z;
 		
-	} else {
-		//ALBEDO = vec3(0.5, 0.5, 0.5);
-		ALBEDO = COLOR.rgb;
-		//ALBEDO = albedo.rgb * albedo_tex.rgb;
-	}
-	if(COLOR.a < threshhold){
-		ALBEDO = vec3(0.0, 0.0, 0.0);
-	}else{
-		ALBEDO = COLOR.rgb;
-	}
+	
+	vec3 bc = getBaryCoords(COLOR,threshhold);
 	
 	
-	vec3 bc = getBaryCoords(COLOR);
-	if( (bc.r < threshhold || bc.g < threshhold || bc.b < threshhold)){
-		ALBEDO = vec3(0.0, 0.0, 0.0);
-	}else{
-		ALBEDO = COLOR.rgb;
-	}	
 	
-//	//NORMAL RGB BARYCENTRIC CODE HERE:
-//	if( (COLOR.r < threshhold || COLOR.g < threshhold || COLOR.b < threshhold)){
-//		ALBEDO = vec3(0.0, 0.0, 0.0);
-//	}else{
-//		ALBEDO = COLOR.rgb;
+//	//basic wireframe, width determined by triangle size
+//	{
+//		if( (bc.r < threshhold || bc.g < threshhold || bc.b < threshhold)){
+//			ALBEDO = vec3(0);
+//		}else{
+//			ALBEDO = bc;
+//		}		
 //	}
+	
+	
+//	//wireframe with fixed width, based on distance from camera.  from: https://tchayen.github.io/wireframes-with-barycentric-coordinates/
+//	{		
+//		float adjustedLineWidth = 5.0 * dist;
+//		vec3 lineColor = vec3(0);
+//		vec3 d = fwidth(bc);
+//		vec3 f = aaStep3(d*adjustedLineWidth,bc);
 //
-	//cyberreality shader code:
-	vec3 color = vec3(0.0);
-    //ALBEDO = max(vec3(get_edge(COLOR.rgb)), color);
+//		//commenting this part out in favor of if/else in case we want to do extra logic on wire condition
+//		{
+//			//float result = min(min(f.x,f.y),f.z);
+//			//ALBEDO = min(vec3(result),bc);
+//		}
+//		{
+//			if(f == vec3(1)){
+//				ALBEDO = bc;
+//			}else{
+//				ALBEDO = vec3(0);
+//			}
+//		}
+//	}
 	
-	//if(ALBEDO == vec3(0.0, 0.0, 0.0))
-//	if(COLOR.a > threshhold){ //} (1.0-threshhold)){
-//		ALBEDO = COLOR.rgb;
-//	}
-//	if(COLOR.x > (1.0-threshhold) || COLOR.y > (1.0-threshhold) || COLOR.z > (1.0-threshhold)) {
-//		ALBEDO = vec3(0.0, 0.0, 0.0);
-//	} else {
-//		ALBEDO = vec3(0.5, 0.5, 0.5);
-//	}
+	//experiments from https://www.pressreader.com/australia/net-magazine/20171005/282853666142801
+	{
+		//calculate our pixels distance from any edge
+		float bcDistFromEdge = min3(bc);
+
+		//\"Anti-Aliased Edges\"
+		lineWidth = 0.02;
+		float edge = 1.0 - aaStep(lineWidth, bcDistFromEdge);
+		
+		
+	
+		//\"See-Through Materials\"
+		//need to set render_modes:  ,depth_draw_alpha_prepass,cull_disabled
+		ALBEDO = vec3(0);		
+		if(edge == 1.0 ){
+			ALBEDO = vec3(0);					
+			if(FRONT_FACING==false){
+				//ALBEDO = vec3(0.25);
+				ALPHA = 0.25;
+			}
+		}else{
+			ALPHA = edge;	
+		}
+		
+		//\"Inner Edge Removal\"
+		ALPHA = 1.0;
+		ALBEDO = vec3(0.75);
+		if(edge == 1.0 ){
+			ALBEDO = vec3(0);
+		}
+		
+		
+		
+
+		
+	}
 	
 	//ALBEDO = COLOR.rgb;
+	
+	
 }
 "
 

@@ -670,8 +670,8 @@ public class BarycentricProcessor
 		for (int i = sortedVerts.Count - 1; i >= 0; i--)
 		{
 			var vertInfo = sortedVerts[i];
-			//mdt.SetVertexColor(vertInfo.vertIdx, alphaBlack);
-			vertInfo.TrySetAvailableColor(Colors.White, true);
+			mdt.SetVertexColor(vertInfo.vertIdx, alphaBlack);
+			//vertInfo.TrySetAvailableColor(Colors.White, true);
 		}
 	}
 
