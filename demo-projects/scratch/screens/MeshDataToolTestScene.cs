@@ -233,7 +233,7 @@ public class BarycentricProcessor
 		for (var vertIdx = 0; vertIdx < vertStorage.Length; vertIdx++)
 		{
 			vertStorage[vertIdx] = new VertexInfo(vertIdx, mdt, vertStorage);
-			//set vert color to black
+			//set vert color to alphaBlack
 			mdt.SetVertexColor(vertIdx, Colors.Transparent);
 		}
 
@@ -243,9 +243,16 @@ public class BarycentricProcessor
 
 		//color channels used for verticies.  3 is ideal, but aprox 10% of verts wont be colored.   
 		var colorChoices = new Color[] { 
-			new Color(1, 0, 0, 0), new Color(0, 1, 0, 0), new Color(0, 0, 1, 0), 
-			//adding a 4th color channel reduces our non-colored by 95%  (99.92% coverage on sibnek 100k vert test model), but makes the shader more complex
-			new Color(0, 0, 0, 1) 
+			//new Color(1, 0, 0, 0), new Color(0, 1, 0, 0), new Color(0, 0, 1, 0), 
+			////adding a 4th color channel reduces our non-colored by 95%  (99.92% coverage on sibnek 100k vert test model), but makes the shader more complex
+			//new Color(0, 0, 0, 1),
+
+			//encode 5 channels as 20% red each.			
+			new Color(0.2f,0,0,0),
+			new Color(0.4f,0,0,0),
+			new Color(0.6f,0,0,0),
+			new Color(0.8f,0,0,0),
+			new Color(1f,0,0,0)
 		};
 
 
@@ -317,8 +324,8 @@ public class BarycentricProcessor
 					var vert_1 = mdt.GetFaceVertex(faceIdx, 1);
 					var vert_2 = mdt.GetFaceVertex(faceIdx, 2);
 					var edge_a = mdt.GetVertex(vert_2).DirectionTo(mdt.GetVertex(vert_0));
-					var edge_b = mdt.GetVertex(vert_2).DirectionTo(mdt.GetVertex(vert_1));
-					var edge_c = mdt.GetVertex(vert_2).DirectionTo(mdt.GetVertex(vert_2));
+					var edge_b = mdt.GetVertex(vert_0).DirectionTo(mdt.GetVertex(vert_1));
+					var edge_c = mdt.GetVertex(vert_1).DirectionTo(mdt.GetVertex(vert_2));
 
 					if ((edge_a > edge_b) && (edge_a > edge_c))
 					{
@@ -418,8 +425,8 @@ public class BarycentricProcessor
 					var vert_1 = mdt.GetFaceVertex(j, 1);
 					var vert_2 = mdt.GetFaceVertex(j, 2);
 					var edge_a = mdt.GetVertex(vert_2).DirectionTo(mdt.GetVertex(vert_0));
-					var edge_b = mdt.GetVertex(vert_2).DirectionTo(mdt.GetVertex(vert_1));
-					var edge_c = mdt.GetVertex(vert_2).DirectionTo(mdt.GetVertex(vert_2));
+					var edge_b = mdt.GetVertex(vert_0).DirectionTo(mdt.GetVertex(vert_1));
+					var edge_c = mdt.GetVertex(vert_1).DirectionTo(mdt.GetVertex(vert_2));
 
 					if ((edge_a > edge_b) && (edge_a > edge_c))
 					{
@@ -645,7 +652,7 @@ public class BarycentricProcessor
 				if (vertInfo.TrySetAvailableColor(color))
 				{
 					sortedVerts.RemoveAt(i);
-
+					
 					//preemptively try to set adjacent and adjadj with related colors
 					foreach (var adj0Vert in vertInfo.GetAdjacentVertInfo())
 					{
@@ -665,14 +672,57 @@ public class BarycentricProcessor
 		//any remaining verts are uncolored!  bad.
 		GD.Print($"ERROR!  Verticies uncolored.  count={sortedVerts.Count} / {mdt.GetVertexCount()}");
 
-		//for any remaining verticies color alpha
-		var alphaBlack = new Color(0, 0, 0, 0);
-		for (int i = sortedVerts.Count - 1; i >= 0; i--)
+		//loop through all faces, finding the vertex for the longest edge, 
+		//and encode that into green channel = 0.1;
+		//may be used by the shader to remove interrior edges
+		var faceCount = mdt.GetFaceCount();
+		for(var faceIdx = 0; faceIdx < faceCount; faceIdx++)
 		{
-			var vertInfo = sortedVerts[i];
-			mdt.SetVertexColor(vertInfo.vertIdx, alphaBlack);
-			//vertInfo.TrySetAvailableColor(Colors.White, true);
+			var vertIdx0 = mdt.GetFaceVertex(faceIdx, 0);
+			var vertIdx1 = mdt.GetFaceVertex(faceIdx, 1);
+			var vertIdx2 = mdt.GetFaceVertex(faceIdx, 2);
+			var vert0 = mdt.GetVertex(vertIdx0);
+			var vert1 = mdt.GetVertex(vertIdx1);
+			var vert2 = mdt.GetVertex(vertIdx2);
+
+			var edgeLen1 = vert0.DistanceTo(vert1);
+			var edgeLen2 = vert0.DistanceTo(vert2);
+			var edgeLen3 = vert1.DistanceTo(vert2);
+
+			int longestEdgeVertIdx = -1;
+			if (edgeLen1 > edgeLen2 && edgeLen1 > edgeLen3)
+			{
+				longestEdgeVertIdx = vertIdx2;
+			}
+			if (edgeLen2 > edgeLen1 && edgeLen2 > edgeLen3)
+			{
+				longestEdgeVertIdx = vertIdx1;
+			}
+			if (edgeLen3 > edgeLen1 && edgeLen3 > edgeLen2)
+			{
+				longestEdgeVertIdx = vertIdx0;
+			}
+			if (longestEdgeVertIdx != -1)
+			{
+				var curCol = mdt.GetVertexColor(longestEdgeVertIdx);
+				//encode that this vertext has longest edge (used in shader code)
+				curCol.g += 0.1f;
+				mdt.SetVertexColor(longestEdgeVertIdx, curCol);
+			}
+
 		}
+
+
+
+
+		////for any remaining verticies color alpha
+		//var alphaBlack = new Color(0, 0, 0, 0);
+		//for (int i = sortedVerts.Count - 1; i >= 0; i--)
+		//{
+		//	var vertInfo = sortedVerts[i];
+		//	mdt.SetVertexColor(vertInfo.vertIdx, alphaBlack);
+		//	//vertInfo.TrySetAvailableColor(Colors.White, true);
+		//}
 	}
 
 	/// <summary>
