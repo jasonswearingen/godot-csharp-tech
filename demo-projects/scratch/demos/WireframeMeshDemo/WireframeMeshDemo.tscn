@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=2]
 
-[ext_resource path="res://demos/WireframeMeshDemo.cs" type="Script" id=1]
+[ext_resource path="res://demos/WireframeMeshDemo/WireframeMeshDemo.cs" type="Script" id=1]
 [ext_resource path="res://asset/test/teapot.obj" type="ArrayMesh" id=2]
 
 [sub_resource type="Shader" id=1]

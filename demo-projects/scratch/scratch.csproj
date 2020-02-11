@@ -76,7 +76,7 @@
     <Compile Include="asset\fish\FishControlFacade.cs" />
     <Compile Include="asset\fish\FishTest.cs" />
     <Compile Include="asset\fish\MoveTestNode.cs" />
-    <Compile Include="demos\WireframeMeshDemo.cs" />
+    <Compile Include="demos\WireframeMeshDemo\WireframeMeshDemo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="screens\BlockTest.cs" />
     <Compile Include="screens\MoveTestScene.cs" />
