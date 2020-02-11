@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 
 [Tool]
-public class MeshDataToolTestScene : Spatial
+public class WireframeMeshDemo : Spatial
 {
 	// Declare member variables here. Examples:
 	// private int a = 2;
@@ -14,17 +14,27 @@ public class MeshDataToolTestScene : Spatial
 
 	// Called when the node enters the scene tree for the first time.
 
+	[Export(PropertyHint.None, "Press to rebuild.")]
+	bool regenOutputMesh = false;
+
+
 
 	TimeSpan timer;
 
 	//ArrayMesh mesh;
 	public override void _Ready()
 	{
+		RebuildOutputMesh();
+	}
+
+	public void RebuildOutputMesh()
+	{
+
+
 		GD.Print("REBUILDING COLOR MESH");
 
 		var inputNode = FindNode("Input") as MeshInstance;
 		var outputNode = FindNode("Output") as MeshInstance;
-		//var mesh = GD.Load<ArrayMesh>("res://asset/fish/Fish1.obj");
 		var mesh = inputNode.Mesh as ArrayMesh;
 
 		if (mesh == null)
@@ -79,20 +89,16 @@ public class MeshDataToolTestScene : Spatial
 		//		_Ready();
 		//	}
 		//}
-	}
 
-
-	public override void _Input(InputEvent @event)
-	{
-
-
-		base._Input(@event);
-		if (Input.IsKeyPressed((int)KeyList.End))
+		if (regenOutputMesh == true)
 		{
-			GD.Print("ui_end pressed.   reloading model");
-			_Ready();
+
+			regenOutputMesh = false;
+			RebuildOutputMesh();
 		}
 	}
+
+
 }
 
 public class BarycentricProcessor
@@ -299,7 +305,7 @@ public class BarycentricProcessor
 			////	}
 			////}
 			////faceVert0MetaInfo[faceVert0Idx] = (normal: faceVert0Norm, color: rand_color);
-			
+
 
 			//loop through all verts for the face, and remove colors from our colorChoices if a vert is already using it
 			for (var faceVertId = 0; faceVertId < 3; faceVertId++)
@@ -512,7 +518,7 @@ public class BarycentricProcessor
 						foreach (var adj1Vert in adj0Vert.GetAdjacentVertInfo())
 						{
 							if (adj1Vert.adjacentVerticies.Length >= 3) //vertInfo.adjacentVerticies.Length)
-																		//if (adj1Vert.adjacentVerticies.Length >= vertInfo.adjacentVerticies.Length)
+																													//if (adj1Vert.adjacentVerticies.Length >= vertInfo.adjacentVerticies.Length)
 							{
 								adj1Vert.TrySetAvailableColor(color);
 							}
@@ -652,7 +658,7 @@ public class BarycentricProcessor
 				if (vertInfo.TrySetAvailableColor(color))
 				{
 					sortedVerts.RemoveAt(i);
-					
+
 					//preemptively try to set adjacent and adjadj with related colors
 					foreach (var adj0Vert in vertInfo.GetAdjacentVertInfo())
 					{
@@ -670,13 +676,13 @@ public class BarycentricProcessor
 			}
 		}
 		//any remaining verts are uncolored!  bad.
-		GD.Print($"ERROR!  Verticies uncolored.  count={sortedVerts.Count} / {mdt.GetVertexCount()}");
+		GD.Print($"Done building mesh.  Verticies uncolored count={sortedVerts.Count} / {mdt.GetVertexCount()}");
 
 		//loop through all faces, finding the vertex for the longest edge, 
 		//and encode that into green channel = 0.1;
 		//may be used by the shader to remove interrior edges
 		var faceCount = mdt.GetFaceCount();
-		for(var faceIdx = 0; faceIdx < faceCount; faceIdx++)
+		for (var faceIdx = 0; faceIdx < faceCount; faceIdx++)
 		{
 			var vertIdx0 = mdt.GetFaceVertex(faceIdx, 0);
 			var vertIdx1 = mdt.GetFaceVertex(faceIdx, 1);
@@ -764,7 +770,7 @@ public class BarycentricProcessor
 		}
 
 		//any remaining verts are uncolored!  bad.
-		GD.Print($"ERROR!  Verticies uncolored.  count={sortedVerts.Count}");
+		GD.Print($"Done building mesh.  Verticies uncolored count={sortedVerts.Count} / {mdt.GetVertexCount()}");
 
 		//for any remaining verticies color alpha
 		var alphaBlack = new Color(0, 0, 0, 0);
