@@ -8,20 +8,17 @@ using System.Collections.Generic;
 [Tool]
 public class WireframeMeshDemo : Spatial
 {
-	// Declare member variables here. Examples:
-	// private int a = 2;
-	// private string b = "text";
-
-	// Called when the node enters the scene tree for the first time.
-
+	/// <summary>
+	/// I don't know how to add editor buttons so this checkbox instead.
+	/// clicking the checkbox in the godot editor's inspector tab 
+	/// will cause the mesh attached to the "input" node to be processed, 
+	/// with the results being set as the "output" node's mesh.
+	/// See "wireframe-demo-overview.mp4" video in this folder for an example of the workflow.
+	/// </summary>
 	[Export(PropertyHint.None, "Press to rebuild.")]
 	bool regenOutputMesh = false;
 
 
-
-	TimeSpan timer;
-
-	//ArrayMesh mesh;
 	public override void _Ready()
 	{
 		RebuildOutputMesh();
@@ -39,17 +36,9 @@ public class WireframeMeshDemo : Spatial
 
 		if (mesh == null)
 		{
+			GD.Print("no mesh found on input node.   aborting");
 			return;
 		}
-
-
-		//var mdt = new MeshDataTool();
-		//mdt.CreateFromSurface(mesh, 0);
-		//_SetVertexColorToBarycentric(mdt);
-		//mesh.SurfaceRemove(0);
-		//mdt.CommitToSurface(mesh);
-		//mdt.Dispose();
-
 
 		var surfaceCount = mesh.GetSurfaceCount();
 		var surfaceQueue = new Queue<MeshDataTool>();
@@ -72,27 +61,12 @@ public class WireframeMeshDemo : Spatial
 		}
 
 		outputNode.Mesh = mesh;
-
-		//GD.Print($"mark fails= {markFailCount}");
 	}
 
-	//  // Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(float delta)
 	{
-		//timer.Add(TimeSpan.FromSeconds(delta));
-
-		//if (Engine.EditorHint)
-		//{
-		//	if (timer.TotalSeconds > 5)
-		//	{
-		//		timer = TimeSpan.Zero;
-		//		_Ready();
-		//	}
-		//}
-
 		if (regenOutputMesh == true)
 		{
-
 			regenOutputMesh = false;
 			RebuildOutputMesh();
 		}
@@ -101,17 +75,13 @@ public class WireframeMeshDemo : Spatial
 
 }
 
+/// <summary>
+/// helper class to construct barycentric coordinates for a mesh, and encode it to the vertex color channel.
+/// 
+/// </summary>
 public class BarycentricProcessor
 {
 
-	//[Flags]
-	//public enum VERTCOLOR
-	//{
-	//	NONE = 0,
-	//	Red = 1,
-	//	Green = 2,
-	//	Blue = 4,
-	//}
 
 	public class VertexInfo : IComparable<VertexInfo>
 	{
@@ -249,10 +219,6 @@ public class BarycentricProcessor
 
 		//color channels used for verticies.  3 is ideal, but aprox 10% of verts wont be colored.   
 		var colorChoices = new Color[] { 
-			//new Color(1, 0, 0, 0), new Color(0, 1, 0, 0), new Color(0, 0, 1, 0), 
-			////adding a 4th color channel reduces our non-colored by 95%  (99.92% coverage on sibnek 100k vert test model), but makes the shader more complex
-			//new Color(0, 0, 0, 1),
-
 			//encode 5 channels as 20% red each.			
 			new Color(0.2f,0,0,0),
 			new Color(0.4f,0,0,0),
@@ -270,6 +236,112 @@ public class BarycentricProcessor
 		_WELSH_POWELL_ADJUSTED(sortedVerts, colorChoices, mdt);
 
 	}
+
+
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <param name="sortedVerts"></param>
+	/// <param name="colorChoices"></param>
+	/// <param name="mdt"></param>
+	private static void _WELSH_POWELL_ADJUSTED(List<VertexInfo> sortedVerts, Color[] colorChoices, MeshDataTool mdt)
+	{
+		for (var h = 0; h < colorChoices.Length; h++)
+		{
+			var color = colorChoices[h];
+
+
+			//enumerate in reverse so we inspect our verticies with highest degree first (most edges)
+			//and also lets us remove from the list directly 
+			for (int i = sortedVerts.Count - 1; i >= 0; i--)
+			{
+				//if we remove too many, reset our index.   this means we might invoke this loop on an element more than once. 
+				//but that's ok as it doesn't have negative consiquences.
+				if (i >= sortedVerts.Count)
+				{
+					i = sortedVerts.Count - 1;
+				}
+
+
+				var vertInfo = sortedVerts[i];
+				if (vertInfo.TrySetAvailableColor(color))
+				{
+					sortedVerts.RemoveAt(i);
+
+					//preemptively try to set adjacent and adjadj with related colors
+					foreach (var adj0Vert in vertInfo.GetAdjacentVertInfo())
+					{
+						//JASON OPTIMIZATION: reduces non-colored by aprox 8% on sibnek 100k vert mesh.
+						foreach (var adj1Vert in adj0Vert.GetAdjacentVertInfo())
+						{
+							if (adj1Vert.adjacentVerticies.Length > vertInfo.adjacentVerticies.Length * 0.75)
+							{
+								adj1Vert.TrySetAvailableColor(color);
+							}
+						}
+					}
+
+				}
+			}
+		}
+		//any remaining verts are uncolored!  bad.
+		GD.Print($"Done building mesh.  Verticies uncolored count={sortedVerts.Count} / {mdt.GetVertexCount()}");
+
+		//loop through all faces, finding the vertex for the longest edge, 
+		//and encode that into green channel = 0.1;
+		//may be used by the shader to remove interrior edges
+		var faceCount = mdt.GetFaceCount();
+		for (var faceIdx = 0; faceIdx < faceCount; faceIdx++)
+		{
+			var vertIdx0 = mdt.GetFaceVertex(faceIdx, 0);
+			var vertIdx1 = mdt.GetFaceVertex(faceIdx, 1);
+			var vertIdx2 = mdt.GetFaceVertex(faceIdx, 2);
+			var vert0 = mdt.GetVertex(vertIdx0);
+			var vert1 = mdt.GetVertex(vertIdx1);
+			var vert2 = mdt.GetVertex(vertIdx2);
+
+			var edgeLen1 = vert0.DistanceTo(vert1);
+			var edgeLen2 = vert0.DistanceTo(vert2);
+			var edgeLen3 = vert1.DistanceTo(vert2);
+
+			int longestEdgeVertIdx = -1;
+			if (edgeLen1 > edgeLen2 && edgeLen1 > edgeLen3)
+			{
+				longestEdgeVertIdx = vertIdx2;
+			}
+			if (edgeLen2 > edgeLen1 && edgeLen2 > edgeLen3)
+			{
+				longestEdgeVertIdx = vertIdx1;
+			}
+			if (edgeLen3 > edgeLen1 && edgeLen3 > edgeLen2)
+			{
+				longestEdgeVertIdx = vertIdx0;
+			}
+			if (longestEdgeVertIdx != -1)
+			{
+				var curCol = mdt.GetVertexColor(longestEdgeVertIdx);
+				//encode that this vertext has longest edge (used in shader code)
+				curCol.g += 0.1f;
+				mdt.SetVertexColor(longestEdgeVertIdx, curCol);
+			}
+
+		}
+
+
+
+
+		////for any remaining verticies color alpha
+		//var alphaBlack = new Color(0, 0, 0, 0);
+		//for (int i = sortedVerts.Count - 1; i >= 0; i--)
+		//{
+		//	var vertInfo = sortedVerts[i];
+		//	mdt.SetVertexColor(vertInfo.vertIdx, alphaBlack);
+		//	//vertInfo.TrySetAvailableColor(Colors.White, true);
+		//}
+	}
+
+	#region test algorithms
 
 
 	/// <summary>
@@ -627,108 +699,6 @@ public class BarycentricProcessor
 			}
 		}
 		GD.Print($"_GREEDY_BASIC uncolored count={problems.Count} / {mdt.GetVertexCount()}");
-	}
-
-	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="sortedVerts"></param>
-	/// <param name="colorChoices"></param>
-	/// <param name="mdt"></param>
-	private static void _WELSH_POWELL_ADJUSTED(List<VertexInfo> sortedVerts, Color[] colorChoices, MeshDataTool mdt)
-	{
-		for (var h = 0; h < colorChoices.Length; h++)
-		{
-			var color = colorChoices[h];
-
-
-			//enumerate in reverse so we inspect our verticies with highest degree first (most edges)
-			//and also lets us remove from the list directly 
-			for (int i = sortedVerts.Count - 1; i >= 0; i--)
-			{
-				//if we remove too many, reset our index.   this means we might invoke this loop on an element more than once. 
-				//but that's ok as it doesn't have negative consiquences.
-				if (i >= sortedVerts.Count)
-				{
-					i = sortedVerts.Count - 1;
-				}
-
-
-				var vertInfo = sortedVerts[i];
-				if (vertInfo.TrySetAvailableColor(color))
-				{
-					sortedVerts.RemoveAt(i);
-
-					//preemptively try to set adjacent and adjadj with related colors
-					foreach (var adj0Vert in vertInfo.GetAdjacentVertInfo())
-					{
-						//JASON OPTIMIZATION: reduces non-colored by aprox 8% on sibnek 100k vert mesh.
-						foreach (var adj1Vert in adj0Vert.GetAdjacentVertInfo())
-						{
-							if (adj1Vert.adjacentVerticies.Length > vertInfo.adjacentVerticies.Length * 0.75)
-							{
-								adj1Vert.TrySetAvailableColor(color);
-							}
-						}
-					}
-
-				}
-			}
-		}
-		//any remaining verts are uncolored!  bad.
-		GD.Print($"Done building mesh.  Verticies uncolored count={sortedVerts.Count} / {mdt.GetVertexCount()}");
-
-		//loop through all faces, finding the vertex for the longest edge, 
-		//and encode that into green channel = 0.1;
-		//may be used by the shader to remove interrior edges
-		var faceCount = mdt.GetFaceCount();
-		for (var faceIdx = 0; faceIdx < faceCount; faceIdx++)
-		{
-			var vertIdx0 = mdt.GetFaceVertex(faceIdx, 0);
-			var vertIdx1 = mdt.GetFaceVertex(faceIdx, 1);
-			var vertIdx2 = mdt.GetFaceVertex(faceIdx, 2);
-			var vert0 = mdt.GetVertex(vertIdx0);
-			var vert1 = mdt.GetVertex(vertIdx1);
-			var vert2 = mdt.GetVertex(vertIdx2);
-
-			var edgeLen1 = vert0.DistanceTo(vert1);
-			var edgeLen2 = vert0.DistanceTo(vert2);
-			var edgeLen3 = vert1.DistanceTo(vert2);
-
-			int longestEdgeVertIdx = -1;
-			if (edgeLen1 > edgeLen2 && edgeLen1 > edgeLen3)
-			{
-				longestEdgeVertIdx = vertIdx2;
-			}
-			if (edgeLen2 > edgeLen1 && edgeLen2 > edgeLen3)
-			{
-				longestEdgeVertIdx = vertIdx1;
-			}
-			if (edgeLen3 > edgeLen1 && edgeLen3 > edgeLen2)
-			{
-				longestEdgeVertIdx = vertIdx0;
-			}
-			if (longestEdgeVertIdx != -1)
-			{
-				var curCol = mdt.GetVertexColor(longestEdgeVertIdx);
-				//encode that this vertext has longest edge (used in shader code)
-				curCol.g += 0.1f;
-				mdt.SetVertexColor(longestEdgeVertIdx, curCol);
-			}
-
-		}
-
-
-
-
-		////for any remaining verticies color alpha
-		//var alphaBlack = new Color(0, 0, 0, 0);
-		//for (int i = sortedVerts.Count - 1; i >= 0; i--)
-		//{
-		//	var vertInfo = sortedVerts[i];
-		//	mdt.SetVertexColor(vertInfo.vertIdx, alphaBlack);
-		//	//vertInfo.TrySetAvailableColor(Colors.White, true);
-		//}
 	}
 
 	/// <summary>
@@ -1198,4 +1168,5 @@ public class BarycentricProcessor
 	}
 
 
+	#endregion test algorithms
 }
