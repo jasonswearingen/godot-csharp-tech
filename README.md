@@ -34,6 +34,11 @@ Main branch is semi-stable.  Dev branch might not build.
   - a reasonably high performance Publish-Subscribe (*Observer Pattern*) based decoupled messaging system.
 - ```MonoDiagLabel``` Addon for Godot: [./lib/src/godot-csharp-tech/addons/MonoDiagLabel](./lib/src/godot-csharp-tech/addons/MonoDiagLabel)
   - Provides runtime diag data on framerate, GC collections, etc.
+- ```WireMesh``` system:  [./demo-projects/scratch/demos/WireMeshDemo](./demo-projects/scratch/demos/WireMeshDemo)
+  - How to preprocess a mesh to use with shaders, such as a wireframe.   [Here is a post describing it](https://godotforums.org/discussion/22031/wireframe-generator-for-godot-c-shader-source-in-thread#latest)
+- ```Multimesh``` example: open the ```scratch/project.godot``` and then load the ```scratch/screens/ProceTest.tscn```  it shows how to create 10,000 animated fish at 110FPS.
+- ```Blender for Non-Artists``` tutorial:  showing how to do various export/processing workflows to make UV/materials usable.   full tutorial here:  [./docs/articles-tutorials/blender-for-non-artists](./docs/articles-tutorials/blender-for-non-artists)
+
 - Bonus stuff:
   - [./demo-projects\ball-run](./demo-projects\ball-run) project shows how to reference a library project directly (not static linking the DLL).   Useful for buid verification and refactoring
   - [./lib\src\godot-csharp-tech\addons\MonoDiagLabel](./lib\src\godot-csharp-tech\addons\MonoDiagLabel) shows how to create a Godot Addon via CSharp
