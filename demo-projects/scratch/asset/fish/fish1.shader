@@ -17,11 +17,11 @@ uniform vec3 uv2_offset = vec3(0);
 
 //////////////////////////////demo parameters
 //how fast you want the fake swimming to move
-uniform float speed = 3.0;
+uniform float speed : hint_range(-10,10)= 3.0;
 //modify how "powerful" the fake swim to be
-uniform float power=0.5;
-//offset time for each instance so they don't look exactly the same
-uniform float offset = 0.0;
+uniform float power : hint_range(-3,3)=0.9;
+////offset time for each instance so they don't look exactly the same
+//uniform float offset = 0.0;
 
 
 //let the model fake move (translate) in the x/y a bit
@@ -49,7 +49,7 @@ mat2 rotate2d(float angle){
 void vertex() {	
 	//vec3 worldPos = vec3(WORLD_MATRIX[3][0],WORLD_MATRIX[3][1],WORLD_MATRIX[3][2]);		
 	UV=UV*uv1_scale.xy+uv1_offset.xy;
-	float time = (TIME * speed) + offset;	
+	float time = (TIME * speed) + float(INSTANCE_ID) * 9.7  + mod((speed * float(INSTANCE_ID) * 0.97),3.0);	
 	float modelExtent = modelLength/2.0;	//half is negative
 	float currentModelZLoc = (VERTEX.z + modelExtent)/modelLength;	
 

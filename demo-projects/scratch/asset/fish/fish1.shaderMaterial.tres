@@ -1,6 +1,7 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+[gd_resource type="ShaderMaterial" load_steps=3 format=2]
 
 [ext_resource path="res://asset/fish/fish1.shader" type="Shader" id=1]
+[ext_resource path="res://asset/fish/Fish1-diffuse_base.png" type="Texture" id=2]
 
 [resource]
 shader = ExtResource( 1 )
@@ -13,5 +14,5 @@ shader_param/uv1_offset = Vector3( 0, 0, 0 )
 shader_param/uv2_scale = Vector3( 1, 1, 1 )
 shader_param/uv2_offset = Vector3( 0, 0, 0 )
 shader_param/speed = 3.0
-shader_param/power = 0.5
-shader_param/offset = 0.0
+shader_param/power = 0.9
+shader_param/texture_albedo = ExtResource( 2 )
