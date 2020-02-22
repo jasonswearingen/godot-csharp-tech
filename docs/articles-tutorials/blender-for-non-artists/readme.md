@@ -152,8 +152,7 @@ I choose more saturted colors for the fish:
 
 ![](./img/20200204-blender-fish-screenshot.png)
 
-This concludes the "Blender for non-artists" tutorial!  If it's useful, consider supporting me on [Patreon](https://www.patreon.com/godot_csharp_tech).
-
+This concludes the "Blender for non-artists" tutorial!  If it's useful, or needs a correction, please create an issue on Github.
 
 
 
